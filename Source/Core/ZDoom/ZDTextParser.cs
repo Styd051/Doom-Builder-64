@@ -232,9 +232,9 @@ namespace CodeImp.DoomBuilder.ZDoom
 						
 						token += c;
 					}
-					// Potential comment?
-					else if(c == '/')
-					{
+                    // Potential comment?
+                    else if((c == '/') && !quotedstring)
+                    {
 						// Check the next byte
 						if(datastream.Position == datastream.Length) return token;
 						char c2 = (char)datareader.ReadByte();

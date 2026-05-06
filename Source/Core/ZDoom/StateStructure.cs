@@ -50,14 +50,14 @@ namespace CodeImp.DoomBuilder.ZDoom
 		#region ================== Properties
 		
 		public string FirstSprite { get { return firstsprite; } }
-		
-		#endregion
 
-		#region ================== Constructor / Disposer
+        #endregion
 
-		// Constructor
-		internal StateStructure(DecorateParser parser, string statename)
-		{
+        #region ================== Constructor / Disposer
+
+        // Constructor
+        internal StateStructure(ActorStructure actor, DecorateParser parser, string statename)
+        {
 			string lasttoken = "";
 			firstsprite = null;
 			
@@ -67,14 +67,161 @@ namespace CodeImp.DoomBuilder.ZDoom
 				// Read first token
 				string token = parser.ReadToken();
 				token = token.ToLowerInvariant();
-				
-				// One of the flow control statements?
-				if((token == "loop") || (token == "stop") || (token == "wait") || (token == "fail"))
+
+                // One of the flow control statements?
+                if((token == "loop") || (token == "stop") || (token == "wait") || (token == "fail") || (token == "goto"))
+                {
+                    // Ignore flow control
+                }
+				/*
+				// Read some other state sprites?
+				else if(token == "goto")
 				{
-					// Ignore flow control
+					string firsttarget = "";
+					string secondtarget = "";
+					bool commentreached = false;
+					bool offsetreached = false;
+					string offsetstr = "";
+					int cindex = 0;
+					
+					// This is a bitch to parse because for some bizarre reason someone thought it
+					// was funny to allow quotes here. Read the whole line and start parsing this manually.
+					string line = parser.ReadLine();
+					
+					// Skip whitespace
+					while((cindex < line.Length) && ((line[cindex] == ' ') || (line[cindex] == '\t')))
+						cindex++;
+					
+					// Parse first target
+					while((cindex < line.Length) && (line[cindex] != ':'))
+					{
+						// When a comment is reached, we're done here
+						if(line[cindex] == '/')
+						{
+							if((cindex + 1 < line.Length) && ((line[cindex + 1] == '/') || (line[cindex + 1] == '*')))
+							{
+								commentreached = true;
+								break;
+							}
+						}
+						
+						// Whitespace ends the string
+						if((line[cindex] == ' ') || (line[cindex] == '\t'))
+							break;
+						
+						// + sign indicates offset start
+						if(line[cindex] == '+')
+						{
+							cindex++;
+							offsetreached = true;
+							break;
+						}
+						
+						// Ignore quotes
+						if(line[cindex] != '"')
+							firsttarget += line[cindex];
+						
+						cindex++;
+					}
+					
+					if(!commentreached && !offsetreached)
+					{
+						// Skip whitespace
+						while((cindex < line.Length) && ((line[cindex] == ' ') || (line[cindex] == '\t')))
+							cindex++;
+						
+						// Parse second target
+						while(cindex < line.Length)
+						{
+							// When a comment is reached, we're done here
+							if(line[cindex] == '/')
+							{
+								if((cindex + 1 < line.Length) && ((line[cindex + 1] == '/') || (line[cindex + 1] == '*')))
+								{
+									commentreached = true;
+									break;
+								}
+							}
+							
+							// Whitespace ends the string
+							if((line[cindex] == ' ') || (line[cindex] == '\t'))
+								break;
+							
+							// + sign indicates offset start
+							if(line[cindex] == '+')
+							{
+								cindex++;
+								offsetreached = true;
+								break;
+							}
+
+							// Ignore quotes and semicolons
+							if((line[cindex] != '"') && (line[cindex] != ':'))
+								secondtarget += line[cindex];
+								
+							cindex++;
+						}
+					}
+					
+					// Try to find the offset if we still haven't found it yet
+					if(!offsetreached)
+					{
+						// Skip whitespace
+						while((cindex < line.Length) && ((line[cindex] == ' ') || (line[cindex] == '\t')))
+							cindex++;
+						
+						if((cindex < line.Length) && (line[cindex] == '+'))
+						{
+							cindex++;
+							offsetreached = true;
+						}
+					}
+					
+					if(offsetreached)
+					{
+						// Parse offset
+						while(cindex < line.Length)
+						{
+							// When a comment is reached, we're done here
+							if(line[cindex] == '/')
+							{
+								if((cindex + 1 < line.Length) && ((line[cindex + 1] == '/') || (line[cindex + 1] == '*')))
+								{
+									commentreached = true;
+									break;
+								}
+							}
+							
+							// Whitespace ends the string
+							if((line[cindex] == ' ') || (line[cindex] == '\t'))
+								break;
+							
+							// Ignore quotes and semicolons
+							if((line[cindex] != '"') && (line[cindex] != ':'))
+								offsetstr += line[cindex];
+							
+							cindex++;
+						}
+					}
+					
+					// We should now have a first target, optionally a second target and optionally a sprite offset
+					
+					// Check if we don't have the class specified
+					if(string.IsNullOrEmpty(secondtarget))
+					{
+						// First target is the state to go to
+						// TODO: Make this happen?
+					}
+					else
+					{
+						// First target is the base class to use
+						// Second target is the state to go to
+						// TODO: Make this happen?
+					}
 				}
-				// Label?
-				else if(token == ":")
+				*/
+                // Label?
+                else if(token == ":")
 				{
 					// Rewind so that this label can be read again
 					parser.DataStream.Seek(-(lasttoken.Length + 1), SeekOrigin.Current);

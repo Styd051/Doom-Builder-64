@@ -46,9 +46,13 @@ namespace CodeImp.DoomBuilder.ZDoom
 		private string inheritclass;
 		private string replaceclass;
 		private int doomednum = -1;
-		
-		// Flags
-		private Dictionary<string, bool> flags;
+
+        // Inheriting
+        private ActorStructure baseclass;
+        private bool skipsuper;
+
+        // Flags
+        private Dictionary<string, bool> flags;
 		
 		// Properties
 		private Dictionary<string, List<string>> props;
@@ -65,7 +69,8 @@ namespace CodeImp.DoomBuilder.ZDoom
 		public string ClassName { get { return classname; } }
 		public string InheritsClass { get { return inheritclass; } }
 		public string ReplacesClass { get { return replaceclass; } }
-		public int DoomEdNum { get { return doomednum; } }
+        public ActorStructure BaseClass { get { return baseclass; } }
+        public int DoomEdNum { get { return doomednum; } }
 		
 		#endregion
 		
@@ -84,9 +89,11 @@ namespace CodeImp.DoomBuilder.ZDoom
 			
 			inheritclass = "actor";
 			replaceclass = null;
-			
-			// First next token is the class name
-			parser.SkipWhitespace(true);
+            baseclass = null;
+            skipsuper = false;
+
+            // First next token is the class name
+            parser.SkipWhitespace(true);
 			classname = parser.StripTokenQuotes(parser.ReadToken());
 			if(string.IsNullOrEmpty(classname))
 			{
@@ -113,13 +120,11 @@ namespace CodeImp.DoomBuilder.ZDoom
 						}
 						else
 						{
-							// Find the actor to inherit from
-							ActorStructure other = parser.GetArchivedActorByName(inheritclass);
-							if(other != null)
-								InheritFrom(other);
-							else
-								General.ErrorLogger.Add(ErrorType.Warning, "Unable to find the DECORATE class '" + inheritclass + "' to inherit from, while parsing '" + classname + "'");
-						}
+                            // Find the actor to inherit from
+                            baseclass = parser.GetArchivedActorByName(inheritclass);
+                            if(baseclass == null)
+                                General.ErrorLogger.Add(ErrorType.Warning, "Unable to find the DECORATE class '" + inheritclass + "' to inherit from, while parsing '" + classname + "'");
+                        }
 					}
 					else if(token == "replaces")
 					{
@@ -200,7 +205,11 @@ namespace CodeImp.DoomBuilder.ZDoom
 						if((t == ";") || (t == null)) break;
 					}
 				}
-				else if(token == "states")
+                else if(token == "skip_super")
+                {
+                    skipsuper = true;
+                }
+                else if(token == "states")
 				{
 					// Now parse actor states until we reach the end of the states structure
 					while(parser.SkipWhitespace(true))
@@ -225,9 +234,9 @@ namespace CodeImp.DoomBuilder.ZDoom
 							{
 								if(!string.IsNullOrEmpty(previoustoken))
 								{
-									// Parse actor state
-									StateStructure st = new StateStructure(parser, previoustoken);
-									if(parser.HasError) return;
+                                    // Parse actor state
+                                    StateStructure st = new StateStructure(this, parser, previoustoken);
+                                    if (parser.HasError) return;
 									states[previoustoken.ToLowerInvariant()] = st;
 								}
 								else
@@ -343,122 +352,164 @@ namespace CodeImp.DoomBuilder.ZDoom
 				previoustoken = token;
 			}
 		}
-		
-		#endregion
-		
-		#region ================== Methods
-		
-		// This is called to inherit properties from another actor
-		private void InheritFrom(ActorStructure baseactor)
-		{
-			this.flags = new Dictionary<string, bool>(baseactor.flags);
-			this.props = new Dictionary<string, List<string>>(baseactor.props.Count);
-			this.states = new Dictionary<string, StateStructure>(baseactor.states);
-			
-			// Copy props
-			foreach(KeyValuePair<string, List<string>> p in baseactor.props)
-				this.props.Add(p.Key, new List<string>(p.Value));
-			
-			// Reset the game property, because it is never inherited
-			props["game"] = new List<string>();
-		}
 
-		/// <summary>
-		/// This checks if the actor has a specific property.
-		/// </summary>
-		public bool HasProperty(string propname)
-		{
-			return props.ContainsKey(propname);
-		}
-		
-		/// <summary>
-		/// This checks if the actor has a specific property with at least one value.
-		/// </summary>
-		public bool HasPropertyWithValue(string propname)
-		{
-			return (props.ContainsKey(propname) && (props[propname].Count > 0));
-		}
-		
-		/// <summary>
-		/// This returns values of a specific property as a complete string. Returns an empty string when the propery has no values.
-		/// </summary>
-		public string GetPropertyAllValues(string propname)
-		{
-			return HasPropertyWithValue(propname) ? string.Join(" ", props[propname].ToArray()) : "";
-		}
+        #endregion
 
-		/// <summary>
-		/// This returns a specific value of a specific property as a string. Returns an empty string when the propery does not have the specified value.
-		/// </summary>
-		public string GetPropertyValueString(string propname, int valueindex)
-		{
-			if(HasProperty(propname) && (props[propname].Count > valueindex))
-				return props[propname][valueindex];
-			else
-				return "";
-		}
-		
-		/// <summary>
-		/// This returns a specific value of a specific property as an integer. Returns 0 when the propery does not have the specified value.
-		/// </summary>
-		public int GetPropertyValueInt(string propname, int valueindex)
-		{
-			if(HasProperty(propname) && (props[propname].Count > valueindex))
-			{
-				int intvalue;
-				if(int.TryParse(props[propname][valueindex], NumberStyles.Integer, CultureInfo.InvariantCulture, out intvalue))
-					return intvalue;
-				else
-					return 0;
-			}
-			else
-			{
-				return 0;
-			}
-		}
+        #region ================== Methods
 
-		/// <summary>
-		/// This returns a specific value of a specific property as a float. Returns 0.0f when the propery does not have the specified value.
-		/// </summary>
-		public float GetPropertyValueFloat(string propname, int valueindex)
-		{
-			if(HasProperty(propname) && (props[propname].Count > valueindex))
-			{
-				float fvalue;
-				if(float.TryParse(props[propname][valueindex], NumberStyles.Float, CultureInfo.InvariantCulture, out fvalue))
-					return fvalue;
-				else
-					return 0.0f;
-			}
-			else
-			{
-				return 0.0f;
-			}
-		}
+        /// <summary>
+        /// This checks if the actor has a specific property.
+        /// </summary>
+        public bool HasProperty(string propname)
+        {
+            if(props.ContainsKey(propname))
+                return true;
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.HasProperty(propname);
+            else
+                return false;
+        }
 
-		/// <summary>
-		/// This returns the status of a flag.
-		/// </summary>
-		public bool HasFlagValue(string flag)
-		{
-			return flags.ContainsKey(flag);
-		}
-		
-		/// <summary>
-		/// This returns the status of a flag.
-		/// </summary>
-		public bool GetFlagValue(string flag, bool defaultvalue)
-		{
-			if(flags.ContainsKey(flag))
-				return flags[flag];
-			else
-				return defaultvalue;
-		}
-		
-		/// <summary>
-		/// This checks if this actor is meant for the current decorate game support
-		/// </summary>
-		public bool CheckActorSupported()
+        /// <summary>
+        /// This checks if the actor has a specific property with at least one value.
+        /// </summary>
+        public bool HasPropertyWithValue(string propname)
+        {
+            if(props.ContainsKey(propname) && (props[propname].Count > 0))
+                return true;
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.HasPropertyWithValue(propname);
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// This returns values of a specific property as a complete string. Returns an empty string when the propery has no values.
+        /// </summary>
+        public string GetPropertyAllValues(string propname)
+        {
+            if(props.ContainsKey(propname) && (props[propname].Count > 0))
+                return string.Join(" ", props[propname].ToArray());
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.GetPropertyAllValues(propname);
+            else
+                return "";
+        }
+
+        /// <summary>
+        /// This returns a specific value of a specific property as a string. Returns an empty string when the propery does not have the specified value.
+        /// </summary>
+        public string GetPropertyValueString(string propname, int valueindex)
+        {
+            if(props.ContainsKey(propname) && (props[propname].Count > valueindex))
+                return props[propname][valueindex];
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.GetPropertyValueString(propname, valueindex);
+            else
+                return "";
+        }
+
+        /// <summary>
+        /// This returns a specific value of a specific property as an integer. Returns 0 when the propery does not have the specified value.
+        /// </summary>
+        public int GetPropertyValueInt(string propname, int valueindex)
+        {
+            string str = GetPropertyValueString(propname, valueindex);
+
+            int intvalue;
+            if(int.TryParse(str, NumberStyles.Integer, CultureInfo.InvariantCulture, out intvalue))
+                return intvalue;
+            else
+                return 0;
+        }
+
+        /// <summary>
+        /// This returns a specific value of a specific property as a float. Returns 0.0f when the propery does not have the specified value.
+        /// </summary>
+        public float GetPropertyValueFloat(string propname, int valueindex)
+        {
+            string str = GetPropertyValueString(propname, valueindex);
+
+            float fvalue;
+            if(float.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out fvalue))
+                return fvalue;
+            else
+                return 0.0f;
+        }
+
+        /// <summary>
+        /// This returns the status of a flag.
+        /// </summary>
+        public bool HasFlagValue(string flag)
+        {
+            if(flags.ContainsKey(flag))
+                return true;
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.HasFlagValue(flag);
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// This returns the status of a flag.
+        /// </summary>
+        public bool GetFlagValue(string flag, bool defaultvalue)
+        {
+            if(flags.ContainsKey(flag))
+                return flags[flag];
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.GetFlagValue(flag, defaultvalue);
+            else
+                return defaultvalue;
+        }
+
+        /// <summary>
+        /// This checks if a state has been defined.
+        /// </summary>
+        public bool HasState(string statename)
+        {
+            if(states.ContainsKey(statename))
+                return true;
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.HasState(statename);
+            else
+                return false;
+        }
+
+        /// <summary>
+        /// This returns a specific state, or null when the state can't be found.
+        /// </summary>
+        internal StateStructure GetState(string statename)
+        {
+            if(states.ContainsKey(statename))
+                return states[statename];
+            else if(!skipsuper && (baseclass != null))
+                return baseclass.GetState(statename);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// This creates a list of all states, also those inherited from the base class.
+        /// </summary>
+        internal Dictionary<string, StateStructure> GetAllStates()
+        {
+            Dictionary<string, StateStructure> list = new Dictionary<string, StateStructure>(states);
+
+            if(!skipsuper && (baseclass != null))
+            {
+                Dictionary<string, StateStructure> baselist = baseclass.GetAllStates();
+                foreach(KeyValuePair<string, StateStructure> s in baselist)
+                    if(!list.ContainsKey(s.Key)) list.Add(s.Key, s.Value);
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// This checks if this actor is meant for the current decorate game support
+        /// </summary>
+        public bool CheckActorSupported()
 		{
 			// Check if we want to include this actor
 			string includegames = General.Map.Config.DecorateGames.ToLowerInvariant();
@@ -474,75 +525,76 @@ namespace CodeImp.DoomBuilder.ZDoom
 		/// </summary>
 		public string FindSuitableSprite()
 		{
-			string result = "";
-			
-			// Sprite forced?
-			if(props.ContainsKey("$sprite"))
-			{
-				return props["$sprite"][0];
-			}
-			else
-			{
-				// Try the idle state
-				if(states.ContainsKey("idle"))
-				{
-					StateStructure s = states["idle"];
-					if(!string.IsNullOrEmpty(s.FirstSprite))
-						result = s.FirstSprite;
-				}
-				
-				// Try the see state
-				if(string.IsNullOrEmpty(result) && states.ContainsKey("see"))
-				{
-					StateStructure s = states["see"];
-					if(!string.IsNullOrEmpty(s.FirstSprite))
-						result = s.FirstSprite;
-				}
-				
-				// Try the inactive state
-				if(string.IsNullOrEmpty(result) && states.ContainsKey("inactive"))
-				{
-					StateStructure s = states["inactive"];
-					if(!string.IsNullOrEmpty(s.FirstSprite))
-						result = s.FirstSprite;
-				}
+            string result = "";
 
-				// Try the spawn state
-				if(string.IsNullOrEmpty(result) && states.ContainsKey("spawn"))
-				{
-					StateStructure s = states["spawn"];
-					if(!string.IsNullOrEmpty(s.FirstSprite))
-						result = s.FirstSprite;
-				}
+            // Sprite forced?
+            if(HasPropertyWithValue("$sprite"))
+            {
+                return GetPropertyValueString("$sprite", 0);
+            }
+            else
+            {
+                // Try the idle state
+                if(HasState("idle"))
+                {
+                    StateStructure s = GetState("idle");
+                    if(!string.IsNullOrEmpty(s.FirstSprite))
+                        result = s.FirstSprite;
+                }
 
-				// Still no sprite found? then just pick the first we can find
-				if(string.IsNullOrEmpty(result))
-				{
-					foreach(StateStructure s in states.Values)
-					{
-						if(!string.IsNullOrEmpty(s.FirstSprite))
-						{
-							result = s.FirstSprite;
-							break;
-						}
-					}
-				}
-				
-				if(!string.IsNullOrEmpty(result))
-				{
-					// The sprite name is not actually complete, we still have to append
-					// the direction characters to it. Find an existing sprite with direction.
-					foreach(string postfix in SPRITE_POSTFIXES)
-					{
-						if(General.Map.Data.GetSpriteExists(result + postfix))
-							return result + postfix;
-					}
-				}
-			}
-			
-			// No sprite found
-			return "";
-		}
+                // Try the see state
+                if(string.IsNullOrEmpty(result) && HasState("see"))
+                {
+                    StateStructure s = GetState("see");
+                    if(!string.IsNullOrEmpty(s.FirstSprite))
+                        result = s.FirstSprite;
+                }
+
+                // Try the inactive state
+                if(string.IsNullOrEmpty(result) && HasState("inactive"))
+                {
+                    StateStructure s = GetState("inactive");
+                    if(!string.IsNullOrEmpty(s.FirstSprite))
+                        result = s.FirstSprite;
+                }
+
+                // Try the spawn state
+                if(string.IsNullOrEmpty(result) && HasState("spawn"))
+                {
+                    StateStructure s = GetState("spawn");
+                    if(!string.IsNullOrEmpty(s.FirstSprite))
+                        result = s.FirstSprite;
+                }
+
+                // Still no sprite found? then just pick the first we can find
+                if(string.IsNullOrEmpty(result))
+                {
+                    Dictionary<string, StateStructure> list = GetAllStates();
+                    foreach(StateStructure s in list.Values)
+                    {
+                        if(!string.IsNullOrEmpty(s.FirstSprite))
+                        {
+                            result = s.FirstSprite;
+                            break;
+                        }
+                    }
+                }
+
+                if(!string.IsNullOrEmpty(result))
+                {
+                    // The sprite name is not actually complete, we still have to append
+                    // the direction characters to it. Find an existing sprite with direction.
+                    foreach(string postfix in SPRITE_POSTFIXES)
+                    {
+                        if(General.Map.Data.GetSpriteExists(result + postfix))
+                            return result + postfix;
+                    }
+                }
+            }
+
+            // No sprite found
+            return "";
+        }
 		
 		#endregion
 	}
