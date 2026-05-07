@@ -798,6 +798,7 @@ namespace CodeImp.DoomBuilder.Editing
                     s.UpdateNeeded = true;
 
                 General.Map.Map.Update();
+                General.MainWindow.RedrawDisplay();
             }
 		}
 
@@ -813,6 +814,7 @@ namespace CodeImp.DoomBuilder.Editing
                     s.UpdateNeeded = true;
 
                 General.Map.Map.Update();
+				General.MainWindow.RedrawDisplay();
             }
 		}
 

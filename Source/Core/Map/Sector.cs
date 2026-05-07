@@ -365,6 +365,12 @@ namespace CodeImp.DoomBuilder.Map
                     case ViewMode.ThingColor:
                         brightint = this.thingColor.color.ToInt();
                         break;
+                    case ViewMode.FloorTextures:
+                        brightint = this.flrColor.color.ToInt();
+                        break;
+                    case ViewMode.CeilingTextures:
+                        brightint = this.ceilColor.color.ToInt();
+                        break;
                     default:
                         break;
                 }
