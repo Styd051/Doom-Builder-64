@@ -685,18 +685,19 @@ namespace CodeImp.DoomBuilder.Data
 			return null;
 		}
 
-		#endregion
-		
-		#region ================== Flats
+        #endregion
 
-		// This loads the textures
-		public override ICollection<ImageData> LoadFlats()
-		{
-			List<ImageData> images = new List<ImageData>();
-			string rangestart, rangeend;
+        #region ================== Flats
 
-			// Error when suspended
-			if(issuspended) throw new Exception("Data reader is suspended");
+        // This loads the textures
+        public override ICollection<ImageData> LoadFlats()
+        {
+            List<ImageData> images = new List<ImageData>();
+            string rangestart, rangeend;
+            int lumpindex;
+
+            // Error when suspended
+            if(issuspended) throw new Exception("Data reader is suspended");
 
 			// Read ranges from configuration
 			foreach(DictionaryEntry r in General.Map.Config.FlatRanges)
@@ -711,8 +712,20 @@ namespace CodeImp.DoomBuilder.Data
 				}
 			}
 
-			// Add images to the container-specific texture set
-			foreach(ImageData img in images)
+            // Load TEXTURES lump file
+            lumpindex = file.FindLumpIndex("TEXTURES");
+            while(lumpindex > -1)
+            {
+                MemoryStream filedata = new MemoryStream(file.Lumps[lumpindex].Stream.ReadAllBytes());
+                WADReader.LoadHighresFlats(filedata, "TEXTURES", ref images, null, null);
+                filedata.Dispose();
+
+                // Find next
+                lumpindex = file.FindLumpIndex("TEXTURES", lumpindex + 1);
+            }
+
+            // Add images to the container-specific texture set
+            foreach(ImageData img in images)
 				textureset.AddFlat(img);
 
 			// Return result
@@ -756,9 +769,33 @@ namespace CodeImp.DoomBuilder.Data
 				startindex = file.FindLumpIndex(startlump, startindex + 1);
 			}
 		}
-		
-		// This finds and returns a patch stream
-		public override Stream GetFlatData(string pname)
+
+        // This loads the flat definitions from a TEXTURES lump
+        public static void LoadHighresFlats(Stream stream, string filename, ref List<ImageData> images, Dictionary<long, ImageData> textures, Dictionary<long, ImageData> flats)
+        {
+            // Parse the data
+            TexturesParser parser = new TexturesParser();
+            parser.Parse(stream, filename);
+
+            // Make the textures
+            foreach(TextureStructure t in parser.Flats)
+            {
+                if(t.Name.Length > 0)
+                {
+                    // Add the texture
+                    ImageData img = t.MakeImage(textures, flats);
+                    images.Add(img);
+                }
+                else
+                {
+                    // Can't load image without name
+                    General.ErrorLogger.Add(ErrorType.Error, "Can't load an unnamed flat from \"" + filename + "\". Please consider giving names to your resources.");
+                }
+            }
+        }
+
+        // This finds and returns a patch stream
+        public override Stream GetFlatData(string pname)
 		{
 			Lump lump;
 
