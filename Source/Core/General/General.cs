@@ -430,8 +430,8 @@ namespace CodeImp.DoomBuilder
 				{
 					// Unable to load configuration
 					errorlogger.Add(ErrorType.Error, "Unable to load the script configuration file \"" + Path.GetFileName(filepath) + "\". Error: " + e.Message);
-					General.WriteLog(e.StackTrace);
-				}
+                    General.WriteLogLine(e.StackTrace);
+                }
 			}
 		}
 
@@ -493,8 +493,8 @@ namespace CodeImp.DoomBuilder
 				{
 					// Unable to load configuration
 					errorlogger.Add(ErrorType.Error, "Unable to load the compiler configuration file \"" + Path.GetFileName(filepath) + "\". " + e.GetType().Name + ": " + e.Message);
-					General.WriteLog(e.StackTrace);
-				}
+                    General.WriteLogLine(e.StackTrace);
+                }
 			}
 		}
 		
