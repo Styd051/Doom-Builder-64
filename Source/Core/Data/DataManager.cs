@@ -430,9 +430,12 @@ namespace CodeImp.DoomBuilder.Data
 			// Dispose preview manager
 			previews.Dispose();
 			previews = null;
-			
-			// Dispose resources
-			foreach(KeyValuePair<long, ImageData> i in textures) i.Value.Dispose();
+
+            // Dispose decorate
+            decorate.Dispose();
+
+            // Dispose resources
+            foreach(KeyValuePair<long, ImageData> i in textures) i.Value.Dispose();
 			foreach(KeyValuePair<long, ImageData> i in flats) i.Value.Dispose();
 			foreach(KeyValuePair<long, ImageData> i in sprites) i.Value.Dispose();
 			palette = null;
@@ -440,9 +443,10 @@ namespace CodeImp.DoomBuilder.Data
 			// Dispose containers
 			foreach(DataReader c in containers) c.Dispose();
 			containers.Clear();
-			
-			// Trash collections
-			containers = null;
+
+            // Trash collections
+            decorate = null;
+            containers = null;
 			textures = null;
             thingpalettes = null;   // villsa
 			flats = null;
