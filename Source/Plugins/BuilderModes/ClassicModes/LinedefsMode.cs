@@ -108,8 +108,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
                         association[1].Set(l.Tag, UniversalType.ThingTag);
                 }
                 else
+                {
                     association[0].Set(0, 0);
-			}
+                    association[1].Set(0, 0); // styd - reset thing tag association
+                }
+            }
 			else
 			{
 				if(l != null)
