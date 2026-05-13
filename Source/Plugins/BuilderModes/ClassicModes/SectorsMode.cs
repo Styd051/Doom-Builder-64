@@ -1213,7 +1213,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 				foreach(Sector s in orderedselection)
 				{
                     s.FloorColor = InterpolateLight(startlight, endlight, index);
-					index += delta;
+                    s.UpdateNeeded = true;
+                    index += delta;
 				}
 
                 // CEILING
@@ -1225,6 +1226,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
                 foreach (Sector s in orderedselection)
                 {
                     s.CeilColor = InterpolateLight(startlight, endlight, index);
+                    s.UpdateNeeded = true;
                     index += delta;
                 }
 
@@ -1237,6 +1239,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
                 foreach (Sector s in orderedselection)
                 {
                     s.ThingColor = InterpolateLight(startlight, endlight, index);
+                    s.UpdateNeeded = true;
                     index += delta;
                 }
 
@@ -1249,6 +1252,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
                 foreach (Sector s in orderedselection)
                 {
                     s.TopColor = InterpolateLight(startlight, endlight, index);
+                    s.UpdateNeeded = true;
                     index += delta;
                 }
 
@@ -1261,6 +1265,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
                 foreach (Sector s in orderedselection)
                 {
                     s.LowerColor = InterpolateLight(startlight, endlight, index);
+                    s.UpdateNeeded = true;
                     index += delta;
                 }
 			}
