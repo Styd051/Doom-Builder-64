@@ -1,4 +1,4 @@
-
+﻿
 #region ================== Copyright (c) 2007 Pascal vd Heiden
 
 /*
@@ -27,16 +27,15 @@ using CodeImp.DoomBuilder.Data;
 using System.IO;
 using System.Diagnostics;
 using CodeImp.DoomBuilder.Config;
-using System.Windows.Forms;
 using CodeImp.DoomBuilder.Windows;
-using CodeImp.DoomBuilder.Geometry;
+using System.Windows.Forms;
 
 #endregion
 
 namespace CodeImp.DoomBuilder.Types
 {
-	[TypeHandler(UniversalType.AngleRadians, "Radians", true)]
-	internal class AngleRadiansHandler : TypeHandler
+	[TypeHandler(UniversalType.ThingType, "Thing Type", true)]
+	internal class ThingTypeHandler : TypeHandler
 	{
 		#region ================== Constants
 
@@ -44,7 +43,7 @@ namespace CodeImp.DoomBuilder.Types
 
 		#region ================== Variables
 
-		private float value;
+		private int value;
 
 		#endregion
 
@@ -52,8 +51,8 @@ namespace CodeImp.DoomBuilder.Types
 
 		public override bool IsBrowseable { get { return true; } }
 
-		public override Image BrowseImage { get { return Properties.Resources.Angle; } }
-		
+		public override Image BrowseImage { get { return Properties.Resources.List; } }
+
 		#endregion
 
 		#region ================== Constructor
@@ -64,34 +63,34 @@ namespace CodeImp.DoomBuilder.Types
 
 		public override void Browse(IWin32Window parent)
 		{
-			value = Angle2D.DoomToReal(AngleForm.ShowDialog(parent, Angle2D.RealToDoom(value)));
+			this.value = ThingBrowserForm.BrowseThing(parent, this.value);
 		}
 
 		public override void SetValue(object value)
 		{
-			float result;
+			int result;
 
 			// Null?
 			if(value == null)
 			{
-				this.value = 0.0f;
+				this.value = 0;
 			}
 			// Compatible type?
 			else if((value is int) || (value is float) || (value is bool))
 			{
 				// Set directly
-				this.value = Convert.ToSingle(value);
+				this.value = Convert.ToInt32(value);
 			}
 			else
 			{
 				// Try parsing as string
-				if(float.TryParse(value.ToString(), NumberStyles.Float, CultureInfo.CurrentCulture, out result))
+				if(int.TryParse(value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result))
 				{
 					this.value = result;
 				}
 				else
 				{
-					this.value = 0.0f;
+					this.value = 0;
 				}
 			}
 		}
@@ -103,7 +102,7 @@ namespace CodeImp.DoomBuilder.Types
 
 		public override int GetIntValue()
 		{
-			return (int)this.value;
+			return this.value;
 		}
 
 		public override string GetStringValue()

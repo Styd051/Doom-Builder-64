@@ -731,6 +731,8 @@
     <Compile Include="Rendering\SurfaceBufferSet.cs" />
     <Compile Include="Rendering\SurfaceEntry.cs" />
     <Compile Include="Rendering\SurfaceManager.cs" />
+    <Compile Include="Types\ThingClassHandler.cs" />
+    <Compile Include="Types\ThingTypeHandler.cs" />
     <Compile Include="Windows\DelayedForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -769,7 +771,7 @@
     </Compile>
     <Compile Include="ZDoom\ActorStructure.cs" />
     <Compile Include="ZDoom\PatchStructure.cs" />
-	<Compile Include="ZDoom\StateGoto.cs" />
+    <Compile Include="ZDoom\StateGoto.cs" />
     <Compile Include="ZDoom\TexturesParser.cs" />
     <Compile Include="ZDoom\TextureStructure.cs" />
     <Compile Include="ZDoom\ZDTextParser.cs" />
@@ -793,7 +795,11 @@
     <Compile Include="General\StepsList.cs" />
     <None Include="Resources\Builder16.png" />
     <None Include="Resources\CLogo.png" />
+    <None Include="Resources\Angle.png" />
     <Content Include="Resources\DB2.ico" />
+    <None Include="Resources\Text.png" />
+    <None Include="Resources\List_Images.png" />
+    <None Include="Resources\List.png" />
     <EmbeddedResource Include="Resources\ThingTrigger.png" />
     <EmbeddedResource Include="Resources\ThingCamera.png" />
     <None Include="Resources\ViewColorFloor.png" />

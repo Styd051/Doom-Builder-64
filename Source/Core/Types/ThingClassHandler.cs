@@ -1,4 +1,4 @@
-
+﻿
 #region ================== Copyright (c) 2007 Pascal vd Heiden
 
 /*
@@ -22,21 +22,20 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Text;
+using CodeImp.DoomBuilder.Config;
 using CodeImp.DoomBuilder.IO;
 using CodeImp.DoomBuilder.Data;
 using System.IO;
 using System.Diagnostics;
-using CodeImp.DoomBuilder.Config;
 using System.Windows.Forms;
 using CodeImp.DoomBuilder.Windows;
-using CodeImp.DoomBuilder.Geometry;
 
 #endregion
 
 namespace CodeImp.DoomBuilder.Types
 {
-	[TypeHandler(UniversalType.AngleRadians, "Radians", true)]
-	internal class AngleRadiansHandler : TypeHandler
+	[TypeHandler(UniversalType.ThingClass, "Thing Class", true)]
+	internal class ThingClassHandler : TypeHandler
 	{
 		#region ================== Constants
 
@@ -44,7 +43,7 @@ namespace CodeImp.DoomBuilder.Types
 
 		#region ================== Variables
 
-		private float value;
+		private string value = "";
 
 		#endregion
 
@@ -52,48 +51,47 @@ namespace CodeImp.DoomBuilder.Types
 
 		public override bool IsBrowseable { get { return true; } }
 
-		public override Image BrowseImage { get { return Properties.Resources.Angle; } }
+		public override Image BrowseImage { get { return Properties.Resources.List; } }
 		
-		#endregion
-
-		#region ================== Constructor
-
 		#endregion
 
 		#region ================== Methods
 
 		public override void Browse(IWin32Window parent)
 		{
-			value = Angle2D.DoomToReal(AngleForm.ShowDialog(parent, Angle2D.RealToDoom(value)));
+			int tid = 0;
+			
+			// Find the thing with this class name
+			foreach(ThingTypeInfo t in General.Map.Data.ThingTypes)
+			{
+				if((t.Actor != null) && (string.Compare(t.Actor.ClassName, value, true) == 0))
+				{
+					tid = t.Index;
+					break;
+				}
+			}
+			
+			//tid = ThingBrowserForm.BrowseThing(parent, tid);
+			ThingBrowserForm f = new ThingBrowserForm(tid);
+			if(f.ShowDialog(Form.ActiveForm) == DialogResult.OK)
+			{
+				// Find the class name for this thing
+				ThingTypeInfo t = General.Map.Data.GetThingInfo(f.SelectedType);
+				if(t.Actor != null)
+					this.value = t.Actor.ClassName;
+				else
+					this.value = "";
+			}
+			
+			f.Dispose();
 		}
 
 		public override void SetValue(object value)
 		{
-			float result;
-
-			// Null?
-			if(value == null)
-			{
-				this.value = 0.0f;
-			}
-			// Compatible type?
-			else if((value is int) || (value is float) || (value is bool))
-			{
-				// Set directly
-				this.value = Convert.ToSingle(value);
-			}
+			if(value != null)
+				this.value = value.ToString();
 			else
-			{
-				// Try parsing as string
-				if(float.TryParse(value.ToString(), NumberStyles.Float, CultureInfo.CurrentCulture, out result))
-				{
-					this.value = result;
-				}
-				else
-				{
-					this.value = 0.0f;
-				}
-			}
+				this.value = "";
 		}
 
 		public override object GetValue()
@@ -101,14 +99,9 @@ namespace CodeImp.DoomBuilder.Types
 			return this.value;
 		}
 
-		public override int GetIntValue()
-		{
-			return (int)this.value;
-		}
-
 		public override string GetStringValue()
 		{
-			return this.value.ToString();
+			return this.value;
 		}
 
 		#endregion

@@ -896,8 +896,10 @@ namespace CodeImp.DoomBuilder.Windows
 		{
 			if((General.Map != null) && (General.Editing.Mode != null))
 			{
-				General.Editing.Mode.OnRedrawDisplay();
-			}
+                General.Plugins.OnEditRedrawDisplayBegin();
+                General.Editing.Mode.OnRedrawDisplay();
+                General.Plugins.OnEditRedrawDisplayEnd();
+            }
 			else
 			{
 				display.Invalidate();
@@ -979,17 +981,25 @@ namespace CodeImp.DoomBuilder.Windows
 		// Mouse click
 		private void display_MouseClick(object sender, MouseEventArgs e)
 		{
-			if((General.Map != null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseClick(e);
-		}
+            if((General.Map != null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseClick(e);
+                General.Editing.Mode.OnMouseClick(e);
+            }
+        }
 
-		// Mouse doubleclick
-		private void display_MouseDoubleClick(object sender, MouseEventArgs e)
+        // Mouse doubleclick
+        private void display_MouseDoubleClick(object sender, MouseEventArgs e)
 		{
-			if((General.Map != null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseDoubleClick(e);
-		}
+            if((General.Map != null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseDoubleClick(e);
+                General.Editing.Mode.OnMouseDoubleClick(e);
+            }
+        }
 
-		// Mouse down
-		private void display_MouseDown(object sender, MouseEventArgs e)
+        // Mouse down
+        private void display_MouseDown(object sender, MouseEventArgs e)
 		{
 			int key = 0;
 			
@@ -1015,33 +1025,49 @@ namespace CodeImp.DoomBuilder.Windows
 			
 			// Invoke any actions associated with this key
 			General.Actions.KeyPressed(key | mod);
-			
-			// Invoke on editing mode
-			if((General.Map != null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseDown(e);
-		}
 
-		// Mouse enters
-		private void display_MouseEnter(object sender, EventArgs e)
+            // Invoke on editing mode
+            if((General.Map != null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseDown(e);
+                General.Editing.Mode.OnMouseDown(e);
+            }
+        }
+
+        // Mouse enters
+        private void display_MouseEnter(object sender, EventArgs e)
 		{
 			mouseinside = true;
-			if((General.Map != null) && (mouseinput == null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseEnter(e);
-		}
+            if((General.Map != null) && (mouseinput == null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseEnter(e);
+                General.Editing.Mode.OnMouseEnter(e);
+            }
+        }
 
-		// Mouse leaves
-		private void display_MouseLeave(object sender, EventArgs e)
+        // Mouse leaves
+        private void display_MouseLeave(object sender, EventArgs e)
 		{
 			mouseinside = false;
-			if((General.Map != null) && (mouseinput == null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseLeave(e);
-		}
+            if((General.Map != null) && (mouseinput == null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseLeave(e);
+                General.Editing.Mode.OnMouseLeave(e);
+            }
+        }
 
-		// Mouse moves
-		private void display_MouseMove(object sender, MouseEventArgs e)
+        // Mouse moves
+        private void display_MouseMove(object sender, MouseEventArgs e)
 		{
-			if((General.Map != null) && (mouseinput == null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseMove(e);
-		}
+            if((General.Map != null) && (mouseinput == null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseMove(e);
+                General.Editing.Mode.OnMouseMove(e);
+            }
+        }
 
-		// Mouse up
-		private void display_MouseUp(object sender, MouseEventArgs e)
+        // Mouse up
+        private void display_MouseUp(object sender, MouseEventArgs e)
 		{
 			int key = 0;
 			
@@ -1066,16 +1092,20 @@ namespace CodeImp.DoomBuilder.Windows
 			// Invoke any actions associated with this key
 			General.Actions.KeyReleased(key | mod);
 
-			// Invoke on editing mode
-			if((General.Map != null) && (General.Editing.Mode != null)) General.Editing.Mode.OnMouseUp(e);
-		}
-		
-		#endregion
+            // Invoke on editing mode
+            if((General.Map != null) && (General.Editing.Mode != null))
+            {
+                General.Plugins.OnEditMouseUp(e);
+                General.Editing.Mode.OnMouseUp(e);
+            }
+        }
 
-		#region ================== Input
-		
-		// This is a tool to lock the mouse in exclusive mode
-		private void StartMouseExclusive()
+        #endregion
+
+        #region ================== Input
+
+        // This is a tool to lock the mouse in exclusive mode
+        private void StartMouseExclusive()
 		{
 			// Not already locked?
 			if(mouseinput == null)
@@ -1224,12 +1254,16 @@ namespace CodeImp.DoomBuilder.Windows
 				// Invoke any actions associated with this key
 				General.Actions.UpdateModifiers(mod);
 				General.Actions.KeyPressed((int)e.KeyData);
-				
-				// Invoke on editing mode
-				if((General.Map != null) && (General.Editing.Mode != null)) General.Editing.Mode.OnKeyDown(e);
-				
-				// Handled
-				e.Handled = true;
+
+                // Invoke on editing mode
+                if((General.Map != null) && (General.Editing.Mode != null))
+                {
+                    General.Plugins.OnEditKeyDown(e);
+                    General.Editing.Mode.OnKeyDown(e);
+                }
+
+                // Handled
+                e.Handled = true;
 				e.SuppressKeyPress = true;
 			}
 			
@@ -1274,12 +1308,16 @@ namespace CodeImp.DoomBuilder.Windows
 				// Invoke any actions associated with this key
 				General.Actions.UpdateModifiers(mod);
 				General.Actions.KeyReleased((int)e.KeyData);
-				
-				// Invoke on editing mode
-				if((General.Map != null) && (General.Editing.Mode != null)) General.Editing.Mode.OnKeyUp(e);
-				
-				// Handled
-				e.Handled = true;
+
+                // Invoke on editing mode
+                if((General.Map != null) && (General.Editing.Mode != null))
+                {
+                    General.Plugins.OnEditKeyUp(e);
+                    General.Editing.Mode.OnKeyUp(e);
+                }
+
+                // Handled
+                e.Handled = true;
 				e.SuppressKeyPress = true;
 			}
 		}
@@ -2538,8 +2576,11 @@ namespace CodeImp.DoomBuilder.Windows
 				// Process mouse input
 				deltamouse = mouseinput.Process();
 				if((General.Map != null) && (General.Editing.Mode != null))
-					General.Editing.Mode.OnMouseInput(deltamouse);
-			}
+                {
+                    General.Plugins.OnEditMouseInput(deltamouse);
+                    General.Editing.Mode.OnMouseInput(deltamouse);
+                }
+            }
 			
 			// Process signal
 			if((General.Map != null) && (General.Editing.Mode != null))

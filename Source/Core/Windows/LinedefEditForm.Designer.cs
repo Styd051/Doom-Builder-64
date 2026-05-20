@@ -421,8 +421,8 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // actiongroup
             // 
-            this.actiongroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.actiongroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.actiongroup.Controls.Add(this.argspanel);
             this.actiongroup.Controls.Add(this.hexenpanel);
             this.actiongroup.Controls.Add(label2);
@@ -580,11 +580,11 @@ namespace CodeImp.DoomBuilder.Windows
             // browseaction
             // 
             this.browseaction.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.browseaction.Image = global::CodeImp.DoomBuilder.Properties.Resources.treeview;
+            this.browseaction.Image = global::CodeImp.DoomBuilder.Properties.Resources.List;
             this.browseaction.Location = new System.Drawing.Point(469, 26);
             this.browseaction.Name = "browseaction";
             this.browseaction.Padding = new System.Windows.Forms.Padding(0, 0, 1, 3);
-            this.browseaction.Size = new System.Drawing.Size(30, 23);
+            this.browseaction.Size = new System.Drawing.Size(28, 23);
             this.browseaction.TabIndex = 1;
             this.browseaction.Text = " ";
             this.browseaction.UseVisualStyleBackColor = true;
@@ -601,9 +601,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // udmfactivates
             // 
-            this.udmfactivates.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.udmfactivates.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.udmfactivates.AutoScroll = true;
             this.udmfactivates.Columns = 2;
             this.udmfactivates.Location = new System.Drawing.Point(56, 5);
@@ -623,8 +623,8 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // settingsgroup
             // 
-            this.settingsgroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.settingsgroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.settingsgroup.Controls.Add(this.flags);
             this.settingsgroup.Location = new System.Drawing.Point(8, 8);
             this.settingsgroup.Name = "settingsgroup";
@@ -635,9 +635,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // flags
             // 
-            this.flags.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.flags.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.flags.AutoScroll = true;
             this.flags.Columns = 3;
             this.flags.Location = new System.Drawing.Point(18, 26);
@@ -656,9 +656,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // tabs
             // 
-            this.tabs.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.tabs.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tabs.Controls.Add(this.tabproperties);
             this.tabs.Controls.Add(this.tabsidedefs);
             this.tabs.Controls.Add(this.tabcustom);
@@ -862,8 +862,8 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // idgroup
             // 
-            this.idgroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.idgroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.idgroup.Controls.Add(this.tag);
             this.idgroup.Controls.Add(taglabel);
             this.idgroup.Controls.Add(this.newtag);
@@ -933,9 +933,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // frontgroup
             // 
-            this.frontgroup.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.frontgroup.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.frontgroup.Controls.Add(this.frontoffsety);
             this.frontgroup.Controls.Add(this.frontoffsetx);
             this.frontgroup.Controls.Add(this.frontsector);
@@ -1043,9 +1043,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // backgroup
             // 
-            this.backgroup.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.backgroup.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.backgroup.Controls.Add(this.backoffsety);
             this.backgroup.Controls.Add(this.backoffsetx);
             this.backgroup.Controls.Add(this.backsector);
@@ -1155,9 +1155,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // fieldslist
             // 
-            this.fieldslist.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.fieldslist.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.fieldslist.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.fieldslist.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fieldslist.Location = new System.Drawing.Point(11, 11);
