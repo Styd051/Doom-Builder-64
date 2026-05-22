@@ -202,8 +202,10 @@ namespace CodeImp.DoomBuilder.Rendering
 		// This draws the image on screen
 		public void Present()
 		{
-			// Start drawing
-			if(graphics.StartRendering(true, General.Colors.Background.ToColorValue(), graphics.BackBuffer, graphics.DepthBuffer))
+            General.Plugins.OnPresentDisplayBegin();
+
+            // Start drawing
+            if(graphics.StartRendering(true, General.Colors.Background.ToColorValue(), graphics.BackBuffer, graphics.DepthBuffer))
 			{
 				// Renderstates that count for this whole sequence
 				graphics.Device.SetRenderState(RenderState.CullMode, Cull.None);

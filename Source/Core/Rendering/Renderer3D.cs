@@ -901,8 +901,10 @@ namespace CodeImp.DoomBuilder.Rendering
 		// This finishes rendering
 		public void Finish()
 		{
-			// Done
-			graphics.FinishRendering();
+            General.Plugins.OnPresentDisplayBegin();
+
+            // Done
+            graphics.FinishRendering();
 			graphics.Present();
 			highlighted = null;
 		}

@@ -102,14 +102,17 @@ namespace CodeImp.DoomBuilder.Editing
 		// Panning
 		public bool IsPanning { get { return panning; } }
 
-		#endregion
+        // Rendering
+        public IRenderer2D Renderer { get { return renderer; } }
 
-		#region ================== Constructor / Disposer
+        #endregion
 
-		/// <summary>
-		/// Provides specialized functionality for a classic (2D) Doom Builder editing mode.
-		/// </summary>
-		public ClassicMode()
+        #region ================== Constructor / Disposer
+
+        /// <summary>
+        /// Provides specialized functionality for a classic (2D) Doom Builder editing mode.
+        /// </summary>
+        public ClassicMode()
 		{
 			// Initialize
 			this.renderer = General.Map.Renderer2D;
