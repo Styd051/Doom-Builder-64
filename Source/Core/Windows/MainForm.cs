@@ -135,10 +135,12 @@ namespace CodeImp.DoomBuilder.Windows
 		
 		// Edit modes
 		private List<ToolStripItem> editmodeitems;
-		
-		// Toolbar
-		private EventHandler buttonvisiblechangedhandler;
-		private bool updatingfilters;
+
+        // Toolbar
+        private List<PluginToolbarButton> pluginbuttons;
+        private EventHandler buttonvisiblechangedhandler;
+        private bool preventupdateseperators;
+        private bool updatingfilters;
 		
 		// Statusbar
 		private StatusInfo status;
@@ -182,7 +184,8 @@ namespace CodeImp.DoomBuilder.Windows
 		{
 			// Setup controls
 			InitializeComponent();
-			editmodeitems = new List<ToolStripItem>();
+            pluginbuttons = new List<PluginToolbarButton>();
+            editmodeitems = new List<ToolStripItem>();
 			labelcollapsedinfo.Text = "";
 			display.Dock = DockStyle.Fill;			
 			
@@ -1504,43 +1507,79 @@ namespace CodeImp.DoomBuilder.Windows
 				updatingfilters = false;
 			}
 		}
-		
-		// This adds a button to the toolbar
-		public void AddButton(ToolStripItem button)
-		{
-			// Find the plugin that called this method
-			Plugin plugin = General.Plugins.FindPluginByAssembly(Assembly.GetCallingAssembly());
 
+        // This adds a button to the toolbar
+        public void AddButton(ToolStripItem button) { AddButton(button, ToolbarSection.Custom, General.Plugins.FindPluginByAssembly(Assembly.GetCallingAssembly())); }
+        public void AddButton(ToolStripItem button, ToolbarSection section) { AddButton(button, section, General.Plugins.FindPluginByAssembly(Assembly.GetCallingAssembly())); }
+        private void AddButton(ToolStripItem button, ToolbarSection section, Plugin plugin)
+        {
 			// Fix tags to full action names
 			ToolStripItemCollection items = new ToolStripItemCollection(toolbar, new ToolStripItem[0]);
 			items.Add(button);
 			RenameTagsToFullActions(items, plugin);
-			
-			// Bind visible changed event
-			if(!(button is ToolStripSeparator)) button.VisibleChanged += buttonvisiblechangedhandler;
-			
-			// Insert the button at the end of the toolbar
-			toolbar.Items.Add(button);
-			UpdateSeparators();
-		}
+
+            // Add to the list so we can update it as needed
+            PluginToolbarButton buttoninfo = new PluginToolbarButton();
+            buttoninfo.button = button;
+            buttoninfo.section = section;
+            pluginbuttons.Add(buttoninfo);
+
+            // Bind visible changed event
+            if(!(button is ToolStripSeparator)) button.VisibleChanged += buttonvisiblechangedhandler;
+
+            // Insert the button in the right section
+            switch(section)
+            {
+                case ToolbarSection.File: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorfile), button); break;
+                case ToolbarSection.Script: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorscript), button); break;
+                case ToolbarSection.UndoRedo: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorundo), button); break;
+                case ToolbarSection.CopyPaste: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorcopypaste), button); break;
+                case ToolbarSection.Prefabs: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorprefabs), button); break;
+                case ToolbarSection.Things: toolbar.Items.Insert(toolbar.Items.IndexOf(buttonviewnormal), button); break;
+                case ToolbarSection.Views: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorviews), button); break;
+                case ToolbarSection.Geometry: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatorgeometry), button); break;
+                case ToolbarSection.Testing: toolbar.Items.Insert(toolbar.Items.IndexOf(seperatortesting), button); break;
+                case ToolbarSection.Custom: toolbar.Items.Add(button); break;
+            }
+
+            UpdateToolbar();
+        }
 
 		// Removes a button
 		public void RemoveButton(ToolStripItem button)
 		{
-			// Unbind visible changed event
-			if(!(button is ToolStripSeparator)) button.VisibleChanged -= buttonvisiblechangedhandler;
+            // Find in the list and remove it
+            PluginToolbarButton buttoninfo = new PluginToolbarButton();
+            for(int i = 0; i < pluginbuttons.Count; i++)
+            {
+                if(pluginbuttons[i].button == button)
+                {
+                    buttoninfo = pluginbuttons[i];
+                    pluginbuttons.RemoveAt(i);
+                    break;
+                }
+            }
 
-			// Remove button
-			toolbar.Items.Remove(button);
-			UpdateSeparators();
-		}
+            if(buttoninfo.button != null)
+            {
+                // Unbind visible changed event
+                if(!(button is ToolStripSeparator)) button.VisibleChanged -= buttonvisiblechangedhandler;
+
+                // Remove button from toolbar
+                toolbar.Items.Remove(button);
+			    UpdateSeparators();
+            }
+        }
 
 		// This handle visibility changes in the toolbar buttons
 		private void ToolbarButtonVisibleChanged(object sender, EventArgs e)
 		{
-			// Update the seeprators
-			UpdateSeparators();
-		}
+            if(!preventupdateseperators)
+            {
+                // Update the seeprators
+                UpdateSeparators();
+            }
+        }
 
 		// This hides redundant seperators and shows single seperators
 		internal void UpdateSeparators()
@@ -1577,9 +1616,30 @@ namespace CodeImp.DoomBuilder.Windows
 		// This enables or disables all editing mode items and toolbar buttons
 		private void UpdateToolbar()
 		{
-			// Enable/disable all edit mode items
-			foreach(ToolStripItem i in editmodeitems) i.Enabled = (General.Map != null);
-		}
+            preventupdateseperators = true;
+
+            // Enable/disable all edit mode items
+            foreach(ToolStripItem i in editmodeitems) i.Enabled = (General.Map != null);
+
+            // Update plugin buttons
+            foreach(PluginToolbarButton p in pluginbuttons)
+            {
+                switch(p.section)
+                {
+                    case ToolbarSection.File: p.button.Visible = General.Settings.ToolbarFile; break;
+                    case ToolbarSection.Script: p.button.Visible = General.Settings.ToolbarScript; break;
+                    case ToolbarSection.UndoRedo: p.button.Visible = General.Settings.ToolbarUndo; break;
+                    case ToolbarSection.CopyPaste: p.button.Visible = General.Settings.ToolbarCopy; break;
+                    case ToolbarSection.Prefabs: p.button.Visible = General.Settings.ToolbarPrefabs; break;
+                    case ToolbarSection.Things: p.button.Visible = General.Settings.ToolbarFilter; break;
+                    case ToolbarSection.Views: p.button.Visible = General.Settings.ToolbarViewModes; break;
+                    case ToolbarSection.Geometry: p.button.Visible = General.Settings.ToolbarGeometry; break;
+                    case ToolbarSection.Testing: p.button.Visible = General.Settings.ToolbarTesting; break;
+                }
+            }
+
+            preventupdateseperators = false;
+        }
 
 		// This checks one of the edit mode items (and unchecks all others)
 		internal void CheckEditModeButton(string modeclassname)
@@ -1623,10 +1683,10 @@ namespace CodeImp.DoomBuilder.Windows
 		{
 			ToolStripSeparator item;
 			int index;
-			
-			// Create a button
-			index = toolbar.Items.IndexOf(buttoneditmodesseperator);
-			item = new ToolStripSeparator();
+
+            // Create a button
+            index = toolbar.Items.IndexOf(seperatormodes);
+            item = new ToolStripSeparator();
 			item.Margin = new Padding(6, 0, 6, 0);
 			toolbar.Items.Insert(index, item);
 			editmodeitems.Add(item);
@@ -1648,10 +1708,10 @@ namespace CodeImp.DoomBuilder.Windows
 			int index;
 
 			string controlname = modeinfo.ButtonDesc.Replace("&", "&&");
-			
-			// Create a button
-			index = toolbar.Items.IndexOf(buttoneditmodesseperator);
-			item = new ToolStripButton(modeinfo.ButtonDesc, modeinfo.ButtonImage, new EventHandler(EditModeButtonHandler));
+
+            // Create a button
+            index = toolbar.Items.IndexOf(seperatormodes);
+            item = new ToolStripButton(modeinfo.ButtonDesc, modeinfo.ButtonImage, new EventHandler(EditModeButtonHandler));
 			item.DisplayStyle = ToolStripItemDisplayStyle.Image;
 			item.Tag = modeinfo;
 			toolbar.Items.Insert(index, item);
