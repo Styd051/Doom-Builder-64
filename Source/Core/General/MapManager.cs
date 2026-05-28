@@ -870,15 +870,15 @@ namespace CodeImp.DoomBuilder
 
 			return lumpscomplete;
 		}
-		
-		#endregion
 
-		#region ================== Lumps
+        #endregion
 
-		// This returns a copy of the requested lump stream data
-		// This is copied from the temp wad file and returns null when the lump is not found
-		internal MemoryStream GetLumpData(string lumpname)
-		{
+        #region ================== Lumps
+
+        // This returns a copy of the requested lump stream data
+        // This is copied from the temp wad file and returns null when the lump is not found
+        public MemoryStream GetLumpData(string lumpname)
+        {
 			Lump l = tempwad.FindLump(lumpname);
 			if(l != null)
 			{
@@ -891,9 +891,9 @@ namespace CodeImp.DoomBuilder
 			}
 		}
 
-		// This writes a copy of the data to a lump in the temp file
-		internal void SetLumpData(string lumpname, MemoryStream data)
-		{
+        // This writes a copy of the data to a lump in the temp file
+        public void SetLumpData(string lumpname, MemoryStream data)
+        {
 			int insertindex = tempwad.Lumps.Count;
 			
 			// Remove the lump if it already exists
@@ -910,8 +910,14 @@ namespace CodeImp.DoomBuilder
 			data.WriteTo(l.Stream);
 		}
 
-		// This creates empty lumps for those required
-		private void CreateRequiredLumps(WAD target, string mapname)
+        // This checks if the specified lump exists in the temp file
+        public bool LumpExists(string lumpname)
+        {
+            return (tempwad.FindLumpIndex(lumpname) > -1);
+        }
+
+        // This creates empty lumps for those required
+        private void CreateRequiredLumps(WAD target, string mapname)
 		{
 			int headerindex, insertindex, targetindex;
 			string lumpname;
