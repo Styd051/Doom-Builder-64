@@ -51,7 +51,8 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		#region ================== Properties
 
 		public override Presentation RenderPresentation { get { return Presentation.Things; } }
-
+		public override Image BrowseImage { get { return Properties.Resources.List; } }
+		
 		#endregion
 
 		#region ================== Constructor / Destructor

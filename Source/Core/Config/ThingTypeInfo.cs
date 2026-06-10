@@ -34,8 +34,8 @@ using System.Drawing;
 
 namespace CodeImp.DoomBuilder.Config
 {
-	public class ThingTypeInfo : IComparable<ThingTypeInfo>
-	{
+    public class ThingTypeInfo : INumberedTitle, IComparable<ThingTypeInfo>
+    {
 		#region ================== Constants
 
 		public const int THING_BLOCKING_NONE = 0;

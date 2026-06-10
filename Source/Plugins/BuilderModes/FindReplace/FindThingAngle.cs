@@ -37,8 +37,8 @@ using CodeImp.DoomBuilder.Config;
 
 namespace CodeImp.DoomBuilder.BuilderModes
 {
-	[FindReplace("Sector Effect", BrowseButton = true)]
-	internal class FindSectorEffect : FindReplaceType
+	[FindReplace("Thing Angle", BrowseButton = true)]
+	internal class FindThingAngle : FindReplaceType
 	{
 		#region ================== Constants
 
@@ -50,21 +50,22 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
 		#region ================== Properties
 
-		public override Image BrowseImage { get { return Properties.Resources.List; } }
+		public override Presentation RenderPresentation { get { return Presentation.Things; } }
+		public override Image BrowseImage { get { return Properties.Resources.Angle; } }
 		
 		#endregion
 
 		#region ================== Constructor / Destructor
 
 		// Constructor
-		public FindSectorEffect()
+		public FindThingAngle()
 		{
 			// Initialize
 
 		}
 
 		// Destructor
-		~FindSectorEffect()
+		~FindThingAngle()
 		{
 		}
 
@@ -75,10 +76,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		// This is called when the browse button is pressed
 		public override string Browse(string initialvalue)
 		{
-			int effect;
-			int.TryParse(initialvalue, out effect);
-			effect = General.Interface.BrowseSectorEffect(BuilderPlug.Me.FindReplaceForm, effect);
-			return effect.ToString();
+			int initangle;
+			int.TryParse(initialvalue, out initangle);
+			return AngleForm.ShowDialog(Form.ActiveForm, initangle).ToString();
 		}
 
 
@@ -90,13 +90,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			List<FindReplaceObject> objs = new List<FindReplaceObject>();
 
 			// Interpret the replacement
-			int replaceeffect = 0;
+			int replaceangle = 0;
 			if(replacewith != null)
 			{
 				// If it cannot be interpreted, set replacewith to null (not replacing at all)
-				if(!int.TryParse(replacewith, out replaceeffect)) replacewith = null;
-				if(replaceeffect < 0) replacewith = null;
-				if(replaceeffect > Int16.MaxValue) replacewith = null;
+				if(!int.TryParse(replacewith, out replaceangle)) replacewith = null;
 				if(replacewith == null)
 				{
 					MessageBox.Show("Invalid replace value for this search type!", "Find and Replace", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -105,26 +103,24 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			}
 
 			// Interpret the number given
-			int effect = 0;
-			if(int.TryParse(value, out effect))
+			int angle = 0;
+			if(int.TryParse(value, out angle))
 			{
 				// Where to search?
-				ICollection<Sector> list = withinselection ? General.Map.Map.GetSelectedSectors(true) : General.Map.Map.Sectors;
+				ICollection<Thing> list = withinselection ? General.Map.Map.GetSelectedThings(true) : General.Map.Map.Things;
 
-				// Go for all sectors
-				foreach(Sector s in list)
+				// Go for all things
+				foreach(Thing t in list)
 				{
-					// Tag matches?
-					if(s.Effect == effect)
+					// Match?
+					if(Angle2D.RealToDoom(t.Angle) == angle)
 					{
 						// Replace
-						if(replacewith != null) s.Effect = replaceeffect;
-						
-						SectorEffectInfo info = General.Map.Config.GetSectorEffectInfo(s.Effect);
-						if(!info.IsNull)
-							objs.Add(new FindReplaceObject(s, "Sector " + s.Index + " (" + info.Title + ")"));
-						else
-							objs.Add(new FindReplaceObject(s, "Sector " + s.Index));
+						if(replacewith != null) t.Rotate(Angle2D.DoomToReal(replaceangle));
+
+						// Add to list
+						ThingTypeInfo ti = General.Map.Data.GetThingInfo(t.Type);
+						objs.Add(new FindReplaceObject(t, "Thing " + t.Index + " (" + ti.Title + ")"));
 					}
 				}
 			}
@@ -138,33 +134,30 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			if(selection.Length == 1)
 			{
 				ZoomToSelection(selection);
-				General.Interface.ShowSectorInfo(selection[0].Sector);
+				General.Interface.ShowThingInfo(selection[0].Thing);
 			}
 			else
 				General.Interface.HideInfo();
 
 			General.Map.Map.ClearAllSelected();
-			foreach(FindReplaceObject obj in selection) obj.Sector.Selected = true;
+			foreach(FindReplaceObject obj in selection) obj.Thing.Selected = true;
 		}
 
 		// Render selection
-		public override void PlotSelection(IRenderer2D renderer, FindReplaceObject[] selection)
+		public override void RenderThingsSelection(IRenderer2D renderer, FindReplaceObject[] selection)
 		{
 			foreach(FindReplaceObject o in selection)
 			{
-				foreach(Sidedef sd in o.Sector.Sidedefs)
-				{
-					renderer.PlotLinedef(sd.Line, General.Colors.Selection);
-				}
+				renderer.RenderThing(o.Thing, General.Colors.Selection, 1.0f);
 			}
 		}
 
 		// Edit objects
 		public override void EditObjects(FindReplaceObject[] selection)
 		{
-			List<Sector> sectors = new List<Sector>(selection.Length);
-			foreach(FindReplaceObject o in selection) sectors.Add(o.Sector);
-			General.Interface.ShowEditSectors(sectors);
+			List<Thing> things = new List<Thing>(selection.Length);
+			foreach(FindReplaceObject o in selection) things.Add(o.Thing);
+			General.Interface.ShowEditThings(things);
 		}
 
 		#endregion
