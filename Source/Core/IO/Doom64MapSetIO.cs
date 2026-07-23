@@ -50,6 +50,7 @@ namespace CodeImp.DoomBuilder.IO
         #region ================== Variables
 
         internal List<Lights> light;
+        internal Dictionary<Sector, int[]> sectorWrittenIndices; // styd
 
         #endregion
 
@@ -91,12 +92,31 @@ namespace CodeImp.DoomBuilder.IO
 		public override double MaxCoordinate { get { return (double)short.MaxValue; } }
 		public override double MinCoordinate { get { return (double)short.MinValue; } }
         public override bool InDoom64Mode { get { return true; } } // villsa
-		
-		#endregion
+
+        #endregion
 
         #region ================== Light Functions
 
-        internal void AddLight(Sector s, Lights slight)
+        // styd: replaces AddLight + GetLight — each slot gets its own unique index
+        internal int AddLightGetIndex(Sector s, Lights slight)
+        {
+            Lights l = slight;
+            if (s.Tag != 0)
+                l.tag = (UInt16)s.Tag;
+
+            // Color in grayscale without tags = direct value (0-255)
+            if (l.color.r == l.color.g &&
+                l.color.r == l.color.b &&
+                l.tag == 0)
+                return l.color.r;
+
+            // Always add a new entry — never deduplication
+            int index = light.Count;
+            light.Add(l);
+            return 256 + index;
+        }
+
+        /*internal void AddLight(Sector s, Lights slight)
         {
             Lights l;
 
@@ -142,14 +162,14 @@ namespace CodeImp.DoomBuilder.IO
             }
 
             return 0;
-        }
+        }*/
 
         #endregion
 
-		#region ================== Reading
+        #region ================== Reading
 
-		// This reads a map from the file and returns a MapSet
-		public override MapSet Read(MapSet map, string mapname)
+        // This reads a map from the file and returns a MapSet
+        public override MapSet Read(MapSet map, string mapname)
 		{
 			int firstindex;
 			Dictionary<int, Vertex> vertexlink;
@@ -234,8 +254,8 @@ namespace CodeImp.DoomBuilder.IO
             mem.Dispose();
         }*/
 
-		// This reads the THINGS from WAD file
-		private void ReadThings(MapSet map, int firstindex)
+        // This reads the THINGS from WAD file
+        private void ReadThings(MapSet map, int firstindex)
 		{
 			MemoryStream mem;
 			BinaryReader reader;
@@ -1042,14 +1062,18 @@ namespace CodeImp.DoomBuilder.IO
             writer = new BinaryWriter(mem, WAD.ENCODING);
 
             light = new List<Lights>();
+            sectorWrittenIndices = new Dictionary<Sector, int[]>();
 
+            // styd: construct indices properly — each slot = unique entry
             foreach (Sector s in map.Sectors)
             {
-                AddLight(s, s.CeilColor);
-                AddLight(s, s.FloorColor);
-                AddLight(s, s.ThingColor);
-                AddLight(s, s.TopColor);
-                AddLight(s, s.LowerColor);
+                int[] indices = new int[5];
+                indices[0] = AddLightGetIndex(s, s.FloorColor);
+                indices[1] = AddLightGetIndex(s, s.CeilColor);
+                indices[2] = AddLightGetIndex(s, s.ThingColor);
+                indices[3] = AddLightGetIndex(s, s.TopColor);
+                indices[4] = AddLightGetIndex(s, s.LowerColor);
+                sectorWrittenIndices[s] = indices;
             }
 
             foreach (Lights l in light)
@@ -1073,8 +1097,8 @@ namespace CodeImp.DoomBuilder.IO
             mem.WriteTo(lump.Stream);
         }
 
-		// This writes the SECTORS to WAD file
-		private void WriteSectors(MapSet map, int position, IDictionary maplumps)
+        // This writes the SECTORS to WAD file
+        private void WriteSectors(MapSet map, int position, IDictionary maplumps)
 		{
 			MemoryStream mem;
 			BinaryWriter writer;
@@ -1139,13 +1163,15 @@ namespace CodeImp.DoomBuilder.IO
                 writer.Write((Int16)flr);
                 writer.Write((Int16)ceil);
 
-                writer.Write((Int16)GetLight(s, s.FloorColor));
-                writer.Write((Int16)GetLight(s, s.CeilColor));
-                writer.Write((Int16)GetLight(s, s.ThingColor));
-                writer.Write((Int16)GetLight(s, s.TopColor));
-                writer.Write((Int16)GetLight(s, s.LowerColor));
+                // styd: use the indices actually written in LIGHTS
+                int[] idx = sectorWrittenIndices[s];
+                writer.Write((Int16)idx[0]); // FloorColor
+                writer.Write((Int16)idx[1]); // CeilColor
+                writer.Write((Int16)idx[2]); // ThingColor
+                writer.Write((Int16)idx[3]); // TopColor
+                writer.Write((Int16)idx[4]); // LowerColor
 
-				writer.Write((UInt16)s.Effect);
+                writer.Write((UInt16)s.Effect);
 				writer.Write((UInt16)s.Tag);
 
                 // Convert flags
