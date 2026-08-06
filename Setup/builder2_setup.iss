@@ -2,13 +2,13 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 [Setup]
-AppName=Doom Builder 64
+AppName=Doom Builder 64 II
 AppVerName=Doom Builder 2.1
 AppPublisher=CodeImp
 AppPublisherURL=http://www.codeimp.com/
 AppSupportURL=http://www.doombuilder.com/
 AppUpdatesURL=http://www.doombuilder.com/
-DefaultDirName={pf}\Doom Builder 64
+DefaultDirName={pf}\Doom Builder 64 II
 DefaultGroupName=Doom Builder
 AllowNoIcons=true
 InfoBeforeFile=..\Setup\disclaimer.txt
@@ -37,7 +37,7 @@ Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:Ad
 Source: Setup\dotnetfx35setup.exe; DestDir: {tmp}; Flags: dontcopy
 Source: Setup\slimdx.msi; DestDir: {tmp}; Flags: dontcopy
 Source: Builder.exe; DestDir: {app}; Flags: ignoreversion
-Source: Builder64.cfg; DestDir: {app}; Flags: ignoreversion
+Source: Builder64II.cfg; DestDir: {app}; Flags: ignoreversion
 Source: Refmanual.chm; DestDir: {app}; Flags: ignoreversion
 Source: Sharpzip.dll; DestDir: {app}; Flags: ignoreversion
 Source: Scintilla.dll; DestDir: {app}; Flags: ignoreversion
@@ -53,19 +53,19 @@ Source: Plugins\Loadorder.cfg; DestDir: {app}\Plugins; Flags: ignoreversion only
 Source: Sprites\*; DestDir: {app}\Sprites; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: {group}\Doom Builder 64; Filename: {app}\Builder.exe
-Name: {group}\{cm:UninstallProgram,Doom Builder 64}; Filename: {uninstallexe}
-Name: {commondesktop}\Doom Builder 64; Filename: {app}\Builder.exe; Tasks: desktopicon
+Name: {group}\Doom Builder 64 II; Filename: {app}\Builder.exe
+Name: {group}\{cm:UninstallProgram,Doom Builder 64 II}; Filename: {uninstallexe}
+Name: {commondesktop}\Doom Builder 64 II; Filename: {app}\Builder.exe; Tasks: desktopicon
 
 [Run]
 
 [UninstallDelete]
-Name: {localappdata}\Doom Builder 64; Type: filesandordirs
+Name: {localappdata}\Doom Builder 64 II; Type: filesandordirs
 Name: {app}; Type: filesandordirs
 [InstallDelete]
 Name: {app}\Builder.pdb; Type: files
 [Registry]
-Root: HKLM; Subkey: SOFTWARE\CodeImp\Doom Builder 64\; ValueType: string; ValueName: Location; ValueData: {app}; Flags: uninsdeletevalue
+Root: HKLM; Subkey: SOFTWARE\CodeImp\Doom Builder 64 II\; ValueType: string; ValueName: Location; ValueData: {app}; Flags: uninsdeletevalue
 [Messages]
 ReadyLabel2a=Continue to begin with the installation, or click Back if you want to review or change any settings.
 [Code]
