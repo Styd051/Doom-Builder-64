@@ -140,6 +140,7 @@
     <Compile Include="VisualModes\VisualMiddleDouble.cs" />
     <Compile Include="VisualModes\VisualSidedefParts.cs" />
     <Compile Include="VisualModes\VisualUpper.cs" />
+	<Compile Include="VisualModes\VisualSwitchDecal.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Actions.cfg" />

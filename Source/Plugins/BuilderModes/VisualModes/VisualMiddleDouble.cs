@@ -91,8 +91,12 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			float geoheight = geotop - geobottom;
 			if(geoheight > 0.001f)
 			{
-				// Texture given?
-				if((Sidedef.MiddleTexture.Length > 0) && (Sidedef.MiddleTexture[0] != '-'))
+                // styd: The double middle wall should ONLY be displayed if the "Render Mid-Texture" flag (512) is checked,
+                // exactly like ML_DRAWMASKED in the original engine's R_WallPrep
+                bool hasmidflag = General.Map.FormatInterface.InDoom64Mode ? Sidedef.Line.IsFlagSet("512") : true;
+
+                // Texture given?
+                if(hasmidflag && (Sidedef.MiddleTexture.Length > 0) && (Sidedef.MiddleTexture[0] != '-'))
                 {
                     Vector2D t1 = new Vector2D();
                     Vector2D t2 = new Vector2D();

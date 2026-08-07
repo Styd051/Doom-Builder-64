@@ -43,15 +43,17 @@ namespace CodeImp.DoomBuilder.BuilderModes
 		public VisualLower lower;
 		public VisualMiddleDouble middledouble;
 		public VisualMiddleSingle middlesingle;
+        public VisualSwitchDecal switchdecal;   // styd
 
-		// Constructor
-		public VisualSidedefParts(VisualUpper u, VisualLower l, VisualMiddleDouble m)
+        // Constructor
+        public VisualSidedefParts(VisualUpper u, VisualLower l, VisualMiddleDouble m)
 		{
 			this.upper = u;
 			this.lower = l;
 			this.middledouble = m;
 			this.middlesingle = null;
-		}
+            this.switchdecal = null;   // styd
+        }
 
 		// Constructor
 		public VisualSidedefParts(VisualMiddleSingle m)
@@ -60,15 +62,36 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			this.lower = null;
 			this.middledouble = null;
 			this.middlesingle = m;
-		}
+            this.switchdecal = null;   // styd
+        }
 
-		// This calls Setup() on all parts
-		public void SetupAllParts()
+        // styd: Constructor with switchdecal
+        public VisualSidedefParts(VisualUpper u, VisualLower l, VisualMiddleDouble m, VisualSwitchDecal sw)
+        {
+            this.upper = u;
+            this.lower = l;
+            this.middledouble = m;
+            this.middlesingle = null;
+            this.switchdecal = sw;
+        }
+
+        public VisualSidedefParts(VisualMiddleSingle m, VisualSwitchDecal sw)
+        {
+            this.upper = null;
+            this.lower = null;
+            this.middledouble = null;
+            this.middlesingle = m;
+            this.switchdecal = sw;
+        }
+
+        // This calls Setup() on all parts
+        public void SetupAllParts()
 		{
 			if(lower != null) lower.Setup();
 			if(middledouble != null) middledouble.Setup();
 			if(middlesingle != null) middlesingle.Setup();
 			if(upper != null) upper.Setup();
-		}
+            if(switchdecal != null) switchdecal.Setup();   // styd
+        }
 	}
 }

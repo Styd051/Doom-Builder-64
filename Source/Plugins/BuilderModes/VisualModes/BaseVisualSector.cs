@@ -153,46 +153,55 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Go for all sidedefs
 			Dictionary<Sidedef, VisualSidedefParts> oldsides = sides ?? new Dictionary<Sidedef, VisualSidedefParts>(1);
 			sides = new Dictionary<Sidedef, VisualSidedefParts>(base.Sector.Sidedefs.Count);
-			foreach(Sidedef sd in base.Sector.Sidedefs)
-			{
-				// VisualSidedef already exists?
-				VisualSidedefParts parts = oldsides.ContainsKey(sd) ? oldsides[sd] : new VisualSidedefParts();
-				
-				// Doublesided or singlesided?
-				if(sd.Other != null)
-				{
-					// Create upper part
-					VisualUpper vu = parts.upper ?? new VisualUpper(mode, this, sd);
-					vu.Setup();
-					base.AddGeometry(vu);
-					
-					// Create lower part
-					VisualLower vl = parts.lower ?? new VisualLower(mode, this, sd);
-					vl.Setup();
-					base.AddGeometry(vl);
-					
-					// Create middle part
-					VisualMiddleDouble vm = parts.middledouble ?? new VisualMiddleDouble(mode, this, sd);
-					vm.Setup();
-					base.AddGeometry(vm);
+            foreach(Sidedef sd in base.Sector.Sidedefs)
+            {
+                // VisualSidedef already exists?
+                VisualSidedefParts parts = oldsides.ContainsKey(sd) ? oldsides[sd] : new VisualSidedefParts();
 
-					// Store
-					sides.Add(sd, new VisualSidedefParts(vu, vl, vm));
-				}
-				else
-				{
-					// Create middle part
-					VisualMiddleSingle vm = parts.middlesingle ?? new VisualMiddleSingle(mode, this, sd);
-					vm.Setup();
-					base.AddGeometry(vm);
-					
-					// Store
-					sides.Add(sd, new VisualSidedefParts(vm));
-				}
-			}
-			
-			// Done
-			changed = false;
+                // styd: prepare the switch decal if applicable
+                VisualSwitchDecal vsw = null;
+                if ((sd.Line.SwitchMask & 0x6000) != 0)
+                {
+                    vsw = parts.switchdecal ?? new VisualSwitchDecal(mode, this, sd);
+                    vsw.Setup();
+                    base.AddGeometry(vsw);
+                }
+
+                // Doublesided or singlesided?
+                if(sd.Other != null)
+                {
+                    // Create upper part
+                    VisualUpper vu = parts.upper ?? new VisualUpper(mode, this, sd);
+                    vu.Setup();
+                    base.AddGeometry(vu);
+
+                    // Create lower part
+                    VisualLower vl = parts.lower ?? new VisualLower(mode, this, sd);
+                    vl.Setup();
+                    base.AddGeometry(vl);
+
+                    // Create middle part
+                    VisualMiddleDouble vm = parts.middledouble ?? new VisualMiddleDouble(mode, this, sd);
+                    vm.Setup();
+                    base.AddGeometry(vm);
+
+                    // Store
+                    sides.Add(sd, new VisualSidedefParts(vu, vl, vm, vsw));
+                }
+                else
+                {
+                    // Create middle part
+                    VisualMiddleSingle vm = parts.middlesingle ?? new VisualMiddleSingle(mode, this, sd);
+                    vm.Setup();
+                    base.AddGeometry(vm);
+
+                    // Store
+                    sides.Add(sd, new VisualSidedefParts(vm, vsw));
+                }
+            }
+
+            // Done
+            changed = false;
 		}
 		
 		// This returns the visual sidedef parts for a given sidedef
