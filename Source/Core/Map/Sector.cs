@@ -588,12 +588,14 @@ namespace CodeImp.DoomBuilder.Map
             {
                 cindex -= 256;
                 color = light[cindex];
+                color.isDirect = false;   // styd: true LIGHTS input, to be preserved as such
             }
             else
             {
                 byte c = (byte)cindex;
 
                 color = new Lights(c, c, c, 0);
+                color.isDirect = true;    // styd: greyscale shortcut
             }
 
             color.color.a = 255;
@@ -623,8 +625,8 @@ namespace CodeImp.DoomBuilder.Map
             SetCeilTexture(tceil);
             this.effect = effect;
             this.tag = tag;
-            this.ceilColor = GetLight(cindex[1], light);
             this.flrColor = GetLight(cindex[0], light);
+            this.ceilColor = GetLight(cindex[1], light);
             this.thingColor = GetLight(cindex[2], light);
             this.topColor = GetLight(cindex[3], light);
             this.lwrColor = GetLight(cindex[4], light);

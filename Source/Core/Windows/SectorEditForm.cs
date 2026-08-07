@@ -41,6 +41,9 @@ namespace CodeImp.DoomBuilder.Windows
 		private ICollection<Sector> sectors;
         private PixelColor color;
         private PixelColor[] initialcolor;
+        private int[] initialtags;   // styd: remembers the tag of each color on load
+        private List<float>[] intensitysteps;   // styd: sequence of clicks +/- per slot (0=Ceiling, 1=Top, 2=Thing, 3=Lower, 4=Floor)
+        private PixelColor[] expectedcolor;   // styd: expected color if only following the +/- clicks, without manual adjustment
         private const float LIGHTINCVALUE = 0.235f;
         private const float LIGHTDECVALUE = -0.1825f;
 
@@ -52,9 +55,17 @@ namespace CodeImp.DoomBuilder.Windows
 
             color = new PixelColor(255, 255, 255, 255);
             initialcolor = new PixelColor[Sector.NUM_COLORS];
+            initialtags = new int[Sector.NUM_COLORS];   // styd
 
-			// Fill effects list
-			effect.AddInfo(General.Map.Config.SortedSectorEffects.ToArray());
+            // styd
+            intensitysteps = new List<float>[Sector.NUM_COLORS];
+            for (int i = 0; i < Sector.NUM_COLORS; i++)
+                intensitysteps[i] = new List<float>();
+
+            expectedcolor = new PixelColor[Sector.NUM_COLORS];   // styd
+
+            // Fill effects list
+            effect.AddInfo(General.Map.Config.SortedSectorEffects.ToArray());
 
             // villsa
             if (General.Map.FormatInterface.InDoom64Mode)
@@ -120,6 +131,18 @@ namespace CodeImp.DoomBuilder.Windows
                 thingcolor.Color = initialcolor[2] = sc.ThingColor.color;
                 lowercolor.Color = initialcolor[3] = sc.LowerColor.color;
                 floorcolor.Color = initialcolor[4] = sc.FloorColor.color;
+
+                // styd: load tags by color
+                ceilingcolortag.Text = (initialtags[0] = sc.CeilColor.tag).ToString();
+                topcolortag.Text = (initialtags[1] = sc.TopColor.tag).ToString();
+                thingcolortag.Text = (initialtags[2] = sc.ThingColor.tag).ToString();
+                lowercolortag.Text = (initialtags[3] = sc.LowerColor.tag).ToString();
+                floorcolortag.Text = (initialtags[4] = sc.FloorColor.tag).ToString();
+
+                // styd: start from scratch each time the window is opened
+                foreach (List<float> l in intensitysteps) l.Clear();
+                for (int i = 0; i < Sector.NUM_COLORS; i++)
+                    expectedcolor[i] = initialcolor[i];   // styd
             }
 
 			// Effects
@@ -224,8 +247,48 @@ namespace CodeImp.DoomBuilder.Windows
 			}
 		}
 
-		// OK clicked
-		private void apply_Click(object sender, EventArgs e)
+        // styd: applies color (absolute OR relative via intensitysteps) + tag to a slot,
+        // preserving isDirect for untouched slots, and allows combining
+        // +/- clicks AND manual retouching in the same edit
+        private void ApplyColorSlot(Lights current, ColorControlSector colorctrl, ButtonsNumericTextbox tagctrl,
+            PixelColor initcolor, int inittag, List<float> steps, PixelColor expected, Action<Lights> setter)
+        {
+            int newtag = tagctrl.GetResult(inittag);
+            bool tagchanged = (newtag != inittag);
+            bool colorchanged = (initcolor.ToColor() != colorctrl.Color.ToColor());
+            bool hasintensitysteps = (steps.Count > 0);
+
+            // styd: Did we follow the exact sequence of clicks, without any manual retouching afterwards?
+            bool followedstepsonly = hasintensitysteps && (colorctrl.Color.ToColor() == expected.ToColor());
+
+            if (!colorchanged && !tagchanged)
+                return;
+
+            Lights light = current;   // share of values ​​specific to this sector
+
+            if (followedstepsonly)
+            {
+                // styd: replays the sequence related to the specific color of this sector
+                foreach (float step in steps)
+                    light.SetIntensity(step);
+            }
+            else if (colorchanged)
+            {
+                // styd: explicit final color (direct pick, or retouching after +/- clicks)
+                light.color = colorctrl.Color;
+            }
+
+            if (tagchanged)
+            {
+                light.tag = (UInt16)General.Clamp(newtag, General.Map.FormatInterface.MinTag, General.Map.FormatInterface.MaxTag);
+                if (light.tag != 0) light.isDirect = false;
+            }
+
+            setter(light);
+        }
+
+        // OK clicked
+        private void apply_Click(object sender, EventArgs e)
 		{
 			string undodesc = "sector";
 			
@@ -260,8 +323,6 @@ namespace CodeImp.DoomBuilder.Windows
                 // villsa - Apply all flags
                 if (General.Map.FormatInterface.InDoom64Mode)
                 {
-                    Lights light = new Lights();
-
                     // flags
                     foreach (CheckBox c in flags.Checkboxes)
                     {
@@ -270,38 +331,14 @@ namespace CodeImp.DoomBuilder.Windows
                     }
 
                     //
-                    // color lights
+                    // color lights + tags
                     //
 
-                    if (initialcolor[0].ToColor() != ceilingcolor.Color.ToColor())
-                    {
-                        light.color = ceilingcolor.Color;
-                        s.CeilColor = light;
-                    }
-
-                    if (initialcolor[1].ToColor() != topcolor.Color.ToColor())
-                    {
-                        light.color = topcolor.Color;
-                        s.TopColor = light;
-                    }
-
-                    if (initialcolor[2].ToColor() != thingcolor.Color.ToColor())
-                    {
-                        light.color = thingcolor.Color;
-                        s.ThingColor = light;
-                    }
-
-                    if (initialcolor[3].ToColor() != lowercolor.Color.ToColor())
-                    {
-                        light.color = lowercolor.Color;
-                        s.LowerColor = light;
-                    }
-
-                    if (initialcolor[4].ToColor() != floorcolor.Color.ToColor())
-                    {
-                        light.color = floorcolor.Color;
-                        s.FloorColor = light;
-                    }
+                    ApplyColorSlot(s.CeilColor, ceilingcolor, ceilingcolortag, initialcolor[0], initialtags[0], intensitysteps[0], expectedcolor[0], v => s.CeilColor = v);
+                    ApplyColorSlot(s.TopColor, topcolor, topcolortag, initialcolor[1], initialtags[1], intensitysteps[1], expectedcolor[1], v => s.TopColor = v);
+                    ApplyColorSlot(s.ThingColor, thingcolor, thingcolortag, initialcolor[2], initialtags[2], intensitysteps[2], expectedcolor[2], v => s.ThingColor = v);
+                    ApplyColorSlot(s.LowerColor, lowercolor, lowercolortag, initialcolor[3], initialtags[3], intensitysteps[3], expectedcolor[3], v => s.LowerColor = v);
+                    ApplyColorSlot(s.FloorColor, floorcolor, floorcolortag, initialcolor[4], initialtags[4], intensitysteps[4], expectedcolor[4], v => s.FloorColor = v);
                 }
 
 				// Effects
@@ -369,74 +406,104 @@ namespace CodeImp.DoomBuilder.Windows
 			hlpevent.Handled = true;
 		}
 
+        // Ceiling +
         private void button1_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(ceilingcolor.Color.r, ceilingcolor.Color.g, ceilingcolor.Color.b, 0);
             light.SetIntensity(LIGHTINCVALUE);
             ceilingcolor.Color = light.color;
+            intensitysteps[0].Add(LIGHTINCVALUE); // styd
+            expectedcolor[0] = light.color;   // styd
         }
 
+        // Top +
         private void button4_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(topcolor.Color.r, topcolor.Color.g, topcolor.Color.b, 0);
             light.SetIntensity(LIGHTINCVALUE);
             topcolor.Color = light.color;
+            intensitysteps[1].Add(LIGHTINCVALUE); // styd
+            expectedcolor[1] = light.color;   // styd
         }
 
+        // Thing +
         private void button16_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(thingcolor.Color.r, thingcolor.Color.g, thingcolor.Color.b, 0);
             light.SetIntensity(LIGHTINCVALUE);
             thingcolor.Color = light.color;
+            intensitysteps[2].Add(LIGHTINCVALUE); // styd
+            expectedcolor[2] = light.color;   // styd
         }
 
+        // Lower +
         private void button18_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(lowercolor.Color.r, lowercolor.Color.g, lowercolor.Color.b, 0);
             light.SetIntensity(LIGHTINCVALUE);
             lowercolor.Color = light.color;
+            intensitysteps[3].Add(LIGHTINCVALUE); // styd
+            expectedcolor[3] = light.color;   // styd
         }
 
+        // Floor +
         private void button20_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(floorcolor.Color.r, floorcolor.Color.g, floorcolor.Color.b, 0);
             light.SetIntensity(LIGHTINCVALUE);
             floorcolor.Color = light.color;
+            intensitysteps[4].Add(LIGHTINCVALUE); // styd
+            expectedcolor[4] = light.color;   // styd
         }
 
+        // Ceiling -
         private void button2_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(ceilingcolor.Color.r, ceilingcolor.Color.g, ceilingcolor.Color.b, 0);
             light.SetIntensity(LIGHTDECVALUE);
             ceilingcolor.Color = light.color;
+            intensitysteps[0].Add(LIGHTDECVALUE); // styd
+            expectedcolor[0] = light.color;   // styd
         }
 
+        // Top -
         private void button3_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(topcolor.Color.r, topcolor.Color.g, topcolor.Color.b, 0);
             light.SetIntensity(LIGHTDECVALUE);
             topcolor.Color = light.color;
+            intensitysteps[1].Add(LIGHTDECVALUE); // styd
+            expectedcolor[1] = light.color;   // styd
         }
 
+        // Thing -
         private void button5_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(thingcolor.Color.r, thingcolor.Color.g, thingcolor.Color.b, 0);
             light.SetIntensity(LIGHTDECVALUE);
             thingcolor.Color = light.color;
+            intensitysteps[2].Add(LIGHTDECVALUE); // styd
+            expectedcolor[2] = light.color;   // styd
         }
 
+        // Lower -
         private void button17_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(lowercolor.Color.r, lowercolor.Color.g, lowercolor.Color.b, 0);
             light.SetIntensity(LIGHTDECVALUE);
             lowercolor.Color = light.color;
+            intensitysteps[3].Add(LIGHTDECVALUE); // styd
+            expectedcolor[3] = light.color;   // styd
         }
 
+        // Floor -
         private void button19_Click(object sender, EventArgs e)
         {
             Lights light = new Lights(floorcolor.Color.r, floorcolor.Color.g, floorcolor.Color.b, 0);
             light.SetIntensity(LIGHTDECVALUE);
             floorcolor.Color = light.color;
+            intensitysteps[4].Add(LIGHTDECVALUE); // styd
+            expectedcolor[4] = light.color;   // styd
         }
-	}
+    }
 }

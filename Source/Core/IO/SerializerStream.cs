@@ -138,6 +138,7 @@ namespace CodeImp.DoomBuilder.IO
             writer.Write(v.color.b);
             writer.Write(v.color.a);
             writer.Write(v.tag);
+            writer.Write(v.isDirect);   // styd: preserves provenance (direct <256 vs LIGHTS input ≥256) across undo/redo
         }
 
 		// Write-only
@@ -190,6 +191,7 @@ namespace CodeImp.DoomBuilder.IO
             writer.Write(v.color.b);
             writer.Write(v.color.a);
             writer.Write(v.tag);
+            writer.Write(v.isDirect);   // styd
         }
 
 		// Read-only is not supported

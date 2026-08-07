@@ -39,6 +39,7 @@ namespace CodeImp.DoomBuilder.Map
         // Properties
         public PixelColor color;
         public UInt16 tag;
+        public bool isDirect;   // styd: true if loaded as a direct index (<256), false if actual LIGHTS input (≥256)
 
         #endregion
 
@@ -51,6 +52,7 @@ namespace CodeImp.DoomBuilder.Map
             this.color.b = b;
             this.color.a = 255;
             this.tag = tag;
+            this.isDirect = true;   // Default value for a color created "from scratch" (not loaded from a file)
         }
 
         #endregion

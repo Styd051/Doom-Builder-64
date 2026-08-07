@@ -101,16 +101,29 @@ namespace CodeImp.DoomBuilder.IO
         internal int AddLightGetIndex(Sector s, Lights slight)
         {
             Lights l = slight;
-            if (s.Tag != 0)
-                l.tag = (UInt16)s.Tag;
 
-            // Color in grayscale without tags = direct value (0-255)
-            if (l.color.r == l.color.g &&
-                l.color.r == l.color.b &&
-                l.tag == 0)
+            if (l.isDirect && l.color.r == l.color.g && l.color.r == l.color.b && l.tag == 0)
                 return l.color.r;
 
-            // Always add a new entry — never deduplication
+            // styd: deduplicate ONLY identical tagged inputs (RGB+tag),
+            // faithful to the behavior of the original DEX editor compiler, and avoids a bug
+            // in KEX/EX where multiple thinkers on separate inputs do not all animate
+            if (l.tag != 0)
+            {
+                for (int i = 0; i < light.Count; i++)
+                {
+                    Lights existing = light[i];
+                    if (existing.tag == l.tag &&
+                        existing.color.r == l.color.r &&
+                        existing.color.g == l.color.g &&
+                        existing.color.b == l.color.b)
+                    {
+                        return 256 + i;
+                    }
+                }
+            }
+
+            // Never deduplicate untagged colors (tag=0)
             int index = light.Count;
             light.Add(l);
             return 256 + index;

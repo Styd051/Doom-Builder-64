@@ -136,6 +136,7 @@ namespace CodeImp.DoomBuilder.IO
             v.color.b = reader.ReadByte();
             v.color.a = reader.ReadByte();
             v.tag = reader.ReadUInt16();
+            v.isDirect = reader.ReadBoolean();   // styd
         }
 
 		// Write-only is not supported
@@ -224,6 +225,7 @@ namespace CodeImp.DoomBuilder.IO
             v.color.b = reader.ReadByte();
             v.color.a = reader.ReadByte();
             v.tag = reader.ReadUInt16();
+            v.isDirect = reader.ReadBoolean();   // styd
         }
 		
 		#endregion
