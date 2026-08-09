@@ -50,6 +50,7 @@ namespace CodeImp.DoomBuilder.IO
         #region ================== Variables
 
         internal List<Lights> light;
+        internal List<bool> lightOwnerTagZero; // styd: true if the entry at this position was first written by a sector with Sector.Tag == 0 — only such entries are safe to reuse for other Tag==0 sectors' untagged colors
         internal Dictionary<Sector, int[]> sectorWrittenIndices; // styd
 
         #endregion
@@ -105,9 +106,10 @@ namespace CodeImp.DoomBuilder.IO
             if (l.isDirect && l.color.r == l.color.g && l.color.r == l.color.b && l.tag == 0)
                 return l.color.r;
 
-            // styd: deduplicate ONLY identical tagged inputs (RGB+tag),
-            // faithful to the behavior of the original DEX editor compiler, and avoids a bug
-            // in KEX/EX where multiple thinkers on separate inputs do not all animate
+            // styd: deduplicate identical tagged inputs (RGB+tag) unconditionally — safe regardless
+            // of which sector owns them, since P_ChangeLightByTag/SetLightID always walks every entry
+            // matching a given light-tag (P_FindLightFromLightTag), so sharing a physical index between
+            // multiple sectors carrying the same light-tag is the correct, intended behavior.
             if (l.tag != 0)
             {
                 for (int i = 0; i < light.Count; i++)
@@ -122,10 +124,37 @@ namespace CodeImp.DoomBuilder.IO
                     }
                 }
             }
+            // styd: for untagged colors (tag == 0), only dedupe when BOTH the current sector and the
+            // existing entry's original owner sector have Sector.Tag == 0. A sector with a real sector
+            // tag can be individually targeted by tag-based sector scripts (Sector_CopyLightsAndInterpolate,
+            // Sector_CopyLights, Modify Sector Color, etc. — all resolve sectors via
+            // P_FindSectorFromLineTag(sector.Tag, ...)), and those scripts mutate the physical LIGHTS
+            // entry referenced by the targeted sector's own colors[i] in place (P_UpdateLightThinker/
+            // T_LightMorph in p_lights.c). Sharing that entry with any other sector — even one that looks
+            // visually identical — makes the other sector bleed the same color change. Confirmed via map02:
+            // sectors 16,17,25,26,30,31,33,35,36,38,40,152,161,180 all changed color together when only
+            // sector 32 (Tag 3) was the intended target of Sector_CopyLightsAndInterpolate(3, 2).
+            // Sectors with Sector.Tag == 0 can never be individually targeted this way (a script would
+            // have to target tag 0, matching literally every untagged sector in the map, which no mapper
+            // does deliberately), so it's safe to let them share entries and shrink the LIGHTS lump.
+            else if (s.Tag == 0)
+            {
+                for (int i = 0; i < light.Count; i++)
+                {
+                    if (lightOwnerTagZero[i] &&
+                        light[i].tag == 0 &&
+                        light[i].color.r == l.color.r &&
+                        light[i].color.g == l.color.g &&
+                        light[i].color.b == l.color.b)
+                    {
+                        return 256 + i;
+                    }
+                }
+            }
 
-            // Never deduplicate untagged colors (tag=0)
             int index = light.Count;
             light.Add(l);
+            lightOwnerTagZero.Add(s.Tag == 0);
             return 256 + index;
         }
 
@@ -1075,6 +1104,7 @@ namespace CodeImp.DoomBuilder.IO
             writer = new BinaryWriter(mem, WAD.ENCODING);
 
             light = new List<Lights>();
+            lightOwnerTagZero = new List<bool>();
             sectorWrittenIndices = new Dictionary<Sector, int[]>();
 
             // styd: construct indices properly — each slot = unique entry
