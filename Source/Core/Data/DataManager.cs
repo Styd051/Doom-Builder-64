@@ -63,7 +63,8 @@ namespace CodeImp.DoomBuilder.Data
 		private Dictionary<long, ImageData> flats;
 		private List<string> flatnames;
 		private Dictionary<long, ImageData> sprites;
-		private List<MatchingTextureSet> texturesets;
+        private Dictionary<string, ImageData> palettesprites; // styd: separate cache for sprites loaded with a non-default palette (palindex > 0) — see GetSpriteImage(name, palindex)
+        private List<MatchingTextureSet> texturesets;
 		private List<ResourceTextureSet> resourcetextures;
 		private AllTextureSet alltextures;
 		
@@ -245,7 +246,8 @@ namespace CodeImp.DoomBuilder.Data
             thingpalettes = new Dictionary<string, Playpal>();
 			flats = new Dictionary<long, ImageData>();
 			sprites = new Dictionary<long, ImageData>();
-			texturenames = new List<string>();
+            palettesprites = new Dictionary<string, ImageData>();
+            texturenames = new List<string>();
 			flatnames = new List<string>();
 			imageque = new Queue<ImageData>();
 			previews = new PreviewManager();
@@ -744,14 +746,41 @@ namespace CodeImp.DoomBuilder.Data
                     return;
                 }
             }
+
+            // styd: make this failure visible — without this warning, a missing palette lump
+            // (e.g. the game configuration's IWAD/resource isn't loaded, or the lump name is wrong)
+            // silently falls back to the default palette with zero indication why.
+            General.ErrorLogger.Add(ErrorType.Warning, "Could not find thing palette lump '" + name + "' in any loaded resource. Monster palette variants using this palette will not display correctly.");
         }
 
-		#endregion
+        // styd: on-demand palette loader for a sprite's OWN base palette (e.g. PALTROO0 for any
+        // TROO* sprite), which isn't pre-registered in the "thingpalettes" config section (only the
+        // alternate/variant palettes like PALTROO1 are). Needed as the reverse-lookup key when
+        // remapping a PNG sprite's baked-in colors to an alternate palette — see ImageData.LocalLoadImage.
+        public Playpal GetOrLoadThingPalette(string name)
+        {
+            if (thingpalettes.ContainsKey(name))
+                return thingpalettes[name];
 
-		#region ================== Colormaps
+            for (int i = containers.Count - 1; i >= 0; i--)
+            {
+                Playpal pal = containers[i].LoadThingPalette(name);
+                if (pal != null)
+                {
+                    thingpalettes[name] = pal;
+                    return pal;
+                }
+            }
 
-		// This loads the colormaps
-		private int LoadColormaps(Dictionary<long, ImageData> list)
+            return null;
+        }
+
+        #endregion
+
+        #region ================== Colormaps
+
+        // This loads the colormaps
+        private int LoadColormaps(Dictionary<long, ImageData> list)
 		{
 			ICollection<ImageData> images;
 			int counter = 0;
@@ -1057,8 +1086,15 @@ namespace CodeImp.DoomBuilder.Data
                 {
                     ImageData image = null;
 
-                    // Sprite not in our collection yet?
-                    if(!sprites.ContainsKey(ti.SpriteLongName))
+                    // styd: use the palette-aware lookup — thing types sharing the same sprite name
+                    // (e.g. Imp / Nightmare Imp both use "TROOA2A8") but a different PalIndex must
+                    // NOT share one cached ImageData instance, or only the first-loaded type's palette
+                    // ever gets applied.
+                    if (ti.PalIndex > 0)
+                    {
+                        image = General.Map.Data.GetSpriteImage(ti.Sprite, ti.PalIndex);
+                    }
+                    else if (!sprites.ContainsKey(ti.SpriteLongName))
                     {
                         // Find sprite data
                         Stream spritedata = GetSpriteData(ti.Sprite);
@@ -1069,10 +1105,6 @@ namespace CodeImp.DoomBuilder.Data
 
                             // Add to collection
                             sprites.Add(ti.SpriteLongName, image);
-
-                            // villsa
-                            if(ti.PalIndex > 0)
-                                image.PalIndex = ti.PalIndex;
                         }
                     }
                     else
@@ -1220,13 +1252,62 @@ namespace CodeImp.DoomBuilder.Data
 				}
 			}
 		}
-		
-		#endregion
 
-		#region ================== Things
-		
-		// This loads the things from Decorate
-		private int LoadDecorateThings()
+        // styd: overload that supports Doom 64 monster palette variants (e.g. Nightmare Imp
+        // reuses sprite "TROOA2A8" — the same as the regular Imp — but needs palette #7 applied).
+        // The plain GetSpriteImage(name) caches purely by sprite name, so two thing types sharing
+        // a sprite name but different PalIndex would incorrectly share one ImageData instance and
+        // only whichever type loaded first would ever get its palette applied. This overload gives
+        // each distinct (name, palindex) pair its own cached, independently palette-remapped instance.
+        public ImageData GetSpriteImage(string name, int palindex)
+        {
+            // No palette variant requested — behaves exactly like the original method
+            if (palindex <= 0)
+                return GetSpriteImage(name);
+
+            // Internal sprites (camera, trigger markers, etc.) never have Doom 64 palette variants
+            if ((name.Length > INTERNAL_PREFIX.Length) && name.ToLowerInvariant().StartsWith(INTERNAL_PREFIX))
+                return GetSpriteImage(name);
+
+            string cachekey = name.Trim().ToUpperInvariant() + "#" + palindex;
+
+            if (palettesprites.ContainsKey(cachekey))
+            {
+                return palettesprites[cachekey];
+            }
+            else
+            {
+                Stream spritedata = null;
+
+                // Go for all opened containers
+                for (int i = containers.Count - 1; i >= 0; i--)
+                {
+                    spritedata = containers[i].GetSpriteData(name);
+                    if (spritedata != null) break;
+                }
+
+                if (spritedata != null)
+                {
+                    SpriteImage image = new SpriteImage(name);
+                    image.PalIndex = palindex;
+
+                    palettesprites.Add(cachekey, image);
+
+                    return image;
+                }
+                else
+                {
+                    return new UnknownImage(Properties.Resources.UnknownImage);
+                }
+            }
+        }
+
+        #endregion
+
+        #region ================== Things
+
+        // This loads the things from Decorate
+        private int LoadDecorateThings()
 		{
 			int counter = 0;
 			

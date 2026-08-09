@@ -165,7 +165,7 @@ namespace CodeImp.DoomBuilder.Controls
             else if ((ti.Sprite.Length <= 8) && (ti.Sprite.Length > 0))
             {
                 spritename.Text = ti.Sprite;
-                General.DisplayZoomedImage(spritetex, General.Map.Data.GetSpriteImage(ti.Sprite).GetPreview());
+                General.DisplayZoomedImage(spritetex, General.Map.Data.GetSpriteImage(ti.Sprite, ti.PalIndex).GetPreview());
             }
             else
             {

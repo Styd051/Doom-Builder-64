@@ -269,15 +269,15 @@ namespace CodeImp.DoomBuilder.BuilderModes
 			// Find thing information
 			info = General.Map.Data.GetThingInfo(Thing.Type);
 
-			// Find sprite texture
-			if(info.Sprite.Length > 0)
-			{
-				sprite = General.Map.Data.GetSpriteImage(info.Sprite);
-				if(sprite != null) sprite.AddReference();
-			}
-			
-			// Setup visual thing
-			Setup();
+            // Find sprite texture
+            if(info.Sprite.Length > 0)
+            {
+                sprite = General.Map.Data.GetSpriteImage(info.Sprite, info.PalIndex);
+                if(sprite != null) sprite.AddReference();
+            }
+
+            // Setup visual thing
+            Setup();
 		}
 		
 		// This updates the thing when needed

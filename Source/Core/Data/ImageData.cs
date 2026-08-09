@@ -236,77 +236,124 @@ namespace CodeImp.DoomBuilder.Data
 				// Bitmap loaded successfully?
 				if(bitmap != null)
 				{
-					// Bitmap has incorrect format?
-					if(bitmap.PixelFormat != PixelFormat.Format32bppArgb)
-					{
-                        // villsa
-                        if (General.Map.FormatInterface.InDoom64Mode)
+                    // Bitmap has incorrect format?
+                    if(bitmap.PixelFormat != PixelFormat.Format32bppArgb)
+                    {
+                        //General.ErrorLogger.Add(ErrorType.Warning, "Image '" + name + "' does not have A8R8G8B8 pixel format. Conversion was needed.");
+                        Bitmap oldbitmap = bitmap;
+                        try
                         {
-                            ColorPalette ncp = bitmap.Palette;
+                            // Convert to desired pixel format
+                            bitmap = new Bitmap(oldbitmap.Size.Width, oldbitmap.Size.Height, PixelFormat.Format32bppArgb);
+                            Graphics g = Graphics.FromImage(bitmap);
+                            g.PageUnit = GraphicsUnit.Pixel;
+                            g.CompositingQuality = CompositingQuality.HighQuality;
+                            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                            g.SmoothingMode = SmoothingMode.None;
+                            g.PixelOffsetMode = PixelOffsetMode.None;
+                            g.Clear(Color.Transparent);
+                            g.DrawImage(oldbitmap, 0, 0, oldbitmap.Size.Width, oldbitmap.Size.Height);
+                            g.Dispose();
+                            oldbitmap.Dispose();
+                        }
+                        catch(Exception e)
+                        {
+                            bitmap = oldbitmap;
+                            General.ErrorLogger.Add(ErrorType.Warning, "Cannot lock image '" + name + "' for pixel format conversion. The image may not be displayed correctly.\n" + e.GetType().Name + ": " + e.Message);
+                        }
+                    }
 
-                            foreach (TextureIndexInfo tp in General.Map.Config.ThingPalettes)
+                    // styd: Doom64 sprite palette variant support (e.g. Nightmare Imp).
+                    // PNG-based Doom64 sprites are decoded straight to 32bppArgb by .NET's built-in
+                    // codec — their indexed colors are already resolved to final RGB using the PNG's
+                    // own embedded/native palette before we ever see the bitmap, so there is no
+                    // indexed ColorPalette left to swap by this point (the classic villsa approach
+                    // above never actually triggers for these). Instead, remap already-decoded pixel
+                    // colors: look up each pixel's RGB in the sprite's OWN base palette (e.g. PALTROO0
+                    // for any TROO* sprite, derived from the sprite name's 4-letter prefix, matching
+                    // Doom's sprite-name convention) to recover its original palette index, then
+                    // replace it with the alternate palette's (e.g. PALTROO1) color at that same index.
+                    if (palindex > 0 && General.Map != null && General.Map.FormatInterface != null &&
+                        General.Map.FormatInterface.InDoom64Mode &&
+                        bitmap.PixelFormat == PixelFormat.Format32bppArgb && name.Length >= 4)
+                    {
+                        TextureIndexInfo target = null;
+                        foreach (TextureIndexInfo tp in General.Map.Config.ThingPalettes)
+                        {
+                            if (tp.Index == palindex && General.Map.Data.ThingPalette.ContainsKey(tp.Title))
                             {
-                                // sprite contains alternate palette?
-                                if (General.Map.Data.ThingPalette.ContainsKey(tp.Title)
-                                    && tp.Index == palindex)
-                                {
-                                    Playpal pal = General.Map.Data.ThingPalette[tp.Title];
-                                    for (int i = 0; i < 255; i++)
-                                    {
-                                        // copy alternate palette over
-                                        ncp.Entries[i] = pal[i].ToColor();
-                                    }
-                                }
+                                target = tp;
+                                break;
                             }
                         }
 
-						//General.ErrorLogger.Add(ErrorType.Warning, "Image '" + name + "' does not have A8R8G8B8 pixel format. Conversion was needed.");
-						Bitmap oldbitmap = bitmap;
-						try
-						{
-							// Convert to desired pixel format
-							bitmap = new Bitmap(oldbitmap.Size.Width, oldbitmap.Size.Height, PixelFormat.Format32bppArgb);
-							Graphics g = Graphics.FromImage(bitmap);
-							g.PageUnit = GraphicsUnit.Pixel;
-							g.CompositingQuality = CompositingQuality.HighQuality;
-							g.InterpolationMode = InterpolationMode.NearestNeighbor;
-							g.SmoothingMode = SmoothingMode.None;
-							g.PixelOffsetMode = PixelOffsetMode.None;
-							g.Clear(Color.Transparent);
-							g.DrawImage(oldbitmap, 0, 0, oldbitmap.Size.Width, oldbitmap.Size.Height);
-							g.Dispose();
-							oldbitmap.Dispose();
-						}
-						catch(Exception e)
-						{
-							bitmap = oldbitmap;
-							General.ErrorLogger.Add(ErrorType.Warning, "Cannot lock image '" + name + "' for pixel format conversion. The image may not be displayed correctly.\n" + e.GetType().Name + ": " + e.Message);
-						}
-					}
-					
-					// This applies brightness correction on the image
-					if(usecolorcorrection)
-					{
-						try
-						{
-							// Try locking the bitmap
-							bmpdata = bitmap.LockBits(new Rectangle(0, 0, bitmap.Size.Width, bitmap.Size.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-						}
-						catch(Exception e)
-						{
-							General.ErrorLogger.Add(ErrorType.Warning, "Cannot lock image '" + name + "' for color correction. The image may not be displayed correctly.\n" + e.GetType().Name + ": " + e.Message);
-						}
+                        if (target != null)
+                        {
+                            string basename = "PAL" + name.Substring(0, 4) + "0";
+                            Playpal basepal = General.Map.Data.GetOrLoadThingPalette(basename);
+                            if (basepal != null)
+                            {
+                                Playpal altpal = General.Map.Data.ThingPalette[target.Title];
 
-						// Bitmap locked?
-						if(bmpdata != null)
-						{
-							// Apply color correction
-							PixelColor* pixels = (PixelColor*)(bmpdata.Scan0.ToPointer());
-							General.Colors.ApplColorCorrection(pixels, bmpdata.Width * bmpdata.Height);
-							bitmap.UnlockBits(bmpdata);
-						}
-					}
-				}
+                                // Build reverse lookup: RGB -> palette index (first match wins on duplicates)
+                                Dictionary<int, int> reverse = new Dictionary<int, int>();
+                                for (int i = 0; i < 256; i++)
+                                {
+                                    int key = (basepal[i].r << 16) | (basepal[i].g << 8) | basepal[i].b;
+                                    if (!reverse.ContainsKey(key))
+                                        reverse.Add(key, i);
+                                }
+
+                                try
+                                {
+                                    BitmapData remapdata = bitmap.LockBits(new Rectangle(0, 0, bitmap.Size.Width, bitmap.Size.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                                    PixelColor* rp = (PixelColor*)(remapdata.Scan0.ToPointer());
+                                    int pixelcount = remapdata.Width * remapdata.Height;
+                                    for (int i = 0; i < pixelcount; i++)
+                                    {
+                                        int key = (rp[i].r << 16) | (rp[i].g << 8) | rp[i].b;
+                                        int idx;
+                                        if (reverse.TryGetValue(key, out idx))
+                                        {
+                                            rp[i].r = altpal[idx].r;
+                                            rp[i].g = altpal[idx].g;
+                                            rp[i].b = altpal[idx].b;
+                                            // alpha (rp[i].a) is left untouched, preserving transparency
+                                        }
+                                    }
+                                    bitmap.UnlockBits(remapdata);
+                                }
+                                catch (Exception e)
+                                {
+                                    General.ErrorLogger.Add(ErrorType.Warning, "Cannot remap palette for image '" + name + "'.\n" + e.GetType().Name + ": " + e.Message);
+                                }
+                            }
+                        }
+                    }
+
+                    // This applies brightness correction on the image
+                    if(usecolorcorrection)
+                    {
+                        try
+                        {
+                            // Try locking the bitmap
+                            bmpdata = bitmap.LockBits(new Rectangle(0, 0, bitmap.Size.Width, bitmap.Size.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                        }
+                        catch(Exception e)
+                        {
+                            General.ErrorLogger.Add(ErrorType.Warning, "Cannot lock image '" + name + "' for color correction. The image may not be displayed correctly.\n" + e.GetType().Name + ": " + e.Message);
+                        }
+
+                        // Bitmap locked?
+                        if(bmpdata != null)
+                        {
+                            // Apply color correction
+                            PixelColor* pixels = (PixelColor*)(bmpdata.Scan0.ToPointer());
+                            General.Colors.ApplColorCorrection(pixels, bmpdata.Width * bmpdata.Height);
+                            bitmap.UnlockBits(bmpdata);
+                        }
+                    }
+                }
 				else
 				{
 					// Loading failed
