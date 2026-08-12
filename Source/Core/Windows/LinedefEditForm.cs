@@ -144,8 +144,9 @@ namespace CodeImp.DoomBuilder.Windows
         {
             // styd: this is called unconditionally from apply_Click() regardless of game
             // mode. Switch Setup only exists for Doom 64, so bail out for other formats -
-            // otherwise the "65536" (ML_CHECKFLOORHEIGHT) flag below would get written
-            // into non-Doom64 maps (Hexen/UDMF) every time this dialog is used.
+            // otherwise SwitchMask (and the checkbox states left over from a Doom64 map)
+            // could get written into non-Doom64 maps (Hexen/UDMF) every time this dialog
+            // is used, even though those formats have no use for it.
             if (!General.Map.FormatInterface.InDoom64Mode)
                 return;
 
@@ -190,17 +191,25 @@ namespace CodeImp.DoomBuilder.Windows
                 if (dispUpper || dispMiddle)
                     texbits |= 0x8000; // ML_SWITCHX08
 
-                l.SwitchMask = texbits;
+                // styd: ML_CHECKFLOORHEIGHT (0x10000) written directly into SwitchMask,
+                // same as the other 3 switch bits, instead of going through the general
+                // Flags dictionary (l.SetFlag("65536", ...)). That relied on "65536"
+                // being registered as a named flag in linedefflags (Doom64_misc.cfg) -
+                // if that entry is missing or out of sync between the source config and
+                // the actually-deployed one, ReadLinedefs() never reconstructs the
+                // "65536" dictionary entry on load even though the raw bit is correctly
+                // present in the WAD, so the Display choice silently reverts to "none"
+                // after a save+reload. Storing it in SwitchMask removes that dependency
+                // entirely - ReadLinedefs() now captures this bit with a direct test,
+                // exactly like it already does for the other 3.
+                if (dispLower || dispMiddle)
+                    texbits |= 0x10000; // ML_CHECKFLOORHEIGHT
 
-                // styd: ML_CHECKFLOORHEIGHT (0x10000) is exposed as its own "Switch
-                // Check Height" checkbox in the general Settings flags list rather than
-                // living in SwitchMask - keep it in sync with the Display choice here.
-                l.SetFlag("65536", dispLower || dispMiddle);
+                l.SwitchMask = texbits;
             }
             else
             {
                 l.SwitchMask = 0;
-                l.SetFlag("65536", false);
             }
         }
 
@@ -222,7 +231,7 @@ namespace CodeImp.DoomBuilder.Windows
             else if (mask == 0x6000) texture = 3;
 
             bool switchx08 = (l.SwitchMask & 0x8000) == 0x8000;
-            bool checkfloorheight = l.IsFlagSet("65536");
+            bool checkfloorheight = (l.SwitchMask & 0x10000) == 0x10000;
 
             if (switchx08 && checkfloorheight) display = 3;
             else if (switchx08) display = 1;

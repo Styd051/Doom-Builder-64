@@ -542,9 +542,16 @@ namespace CodeImp.DoomBuilder.IO
 
                 if ((flags & 0x8000) == 0x8000)
                     switchmask |= 0x8000;
-				
-				// Make string flags
-				stringflags = new Dictionary<string, bool>();
+
+                // styd: ML_CHECKFLOORHEIGHT captured here directly, same as the 3 bits
+                // above, instead of relying on it being registered as a named flag in
+                // linedefflags (Doom64_misc.cfg) - makes Switch Setup fully independent
+                // of that config entry, whatever state it's in.
+                if ((flags & 0x10000) == 0x10000)
+                    switchmask |= 0x10000;
+
+                // Make string flags
+                stringflags = new Dictionary<string, bool>();
 				foreach(string f in manager.Config.SortedLinedefFlags)
 				{
 					uint fnum;

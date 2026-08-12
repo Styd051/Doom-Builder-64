@@ -158,20 +158,9 @@ namespace CodeImp.DoomBuilder.BuilderModes
                 // VisualSidedef already exists?
                 VisualSidedefParts parts = oldsides.ContainsKey(sd) ? oldsides[sd] : new VisualSidedefParts();
 
-                // styd: prepare the switch decal if applicable. Gate on EITHER the
-                // texture choice (SwitchMask bits 0x2000/0x4000) OR the display
-                // position choice (SWITCHX08 in SwitchMask, CHECKFLOORHEIGHT as the
-                // general "65536" flag) - R_WallPrep's 3 render cases in DOOM64-RE are
-                // gated purely by the display bits, independently of which texture
-                // slot is chosen, so a linedef with only Display set (no Texture) can
-                // still render a switch decal in the real engine (falling back to
-                // midtexture/toptexture/bottomtexture per case - see
-                // VisualSwitchDecal.Setup()). The Builder itself never produces that
-                // combination via the editor, but an externally-authored WAD could.
-                bool switchHasTexture = (sd.Line.SwitchMask & 0x6000) != 0;
-                bool switchHasDisplay = ((sd.Line.SwitchMask & 0x8000) != 0) || sd.Line.IsFlagSet("65536");
+                // styd: prepare the switch decal if applicable
                 VisualSwitchDecal vsw = null;
-                if(switchHasTexture || switchHasDisplay)
+                if ((sd.Line.SwitchMask & 0x6000) != 0)
                 {
                     vsw = parts.switchdecal ?? new VisualSwitchDecal(mode, this, sd);
                     vsw.Setup();

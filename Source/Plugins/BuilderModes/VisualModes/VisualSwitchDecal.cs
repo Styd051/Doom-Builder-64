@@ -36,7 +36,11 @@ namespace CodeImp.DoomBuilder.BuilderModes
             bool hasback = (Sidedef.Other != null);
             int switchmask = Sidedef.Line.SwitchMask & 0x6000;
             bool switchx08 = (Sidedef.Line.SwitchMask & 0x8000) != 0;
-            bool checkfloorheight = Sidedef.Line.IsFlagSet("65536"); // ML_CHECKFLOORHEIGHT
+            // styd: read directly from SwitchMask (like the other 3 switch bits) instead
+            // of IsFlagSet("65536"), which depended on that flag being registered in
+            // linedefflags (Doom64_misc.cfg) - see the comment in
+            // LinedefEditForm.SetSwitchMask() for the full story.
+            bool checkfloorheight = (Sidedef.Line.SwitchMask & 0x10000) != 0; // ML_CHECKFLOORHEIGHT
 
             long switchtex = 0;
             bool hasswitchtex = false;
