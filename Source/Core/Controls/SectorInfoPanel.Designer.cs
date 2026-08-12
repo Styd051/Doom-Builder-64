@@ -50,14 +50,19 @@ namespace CodeImp.DoomBuilder.Controls
             this.lightInfo = new System.Windows.Forms.GroupBox();
             this.ceilingcolor = new System.Windows.Forms.Panel();
             this.label6 = new System.Windows.Forms.Label();
+            this.ceilingcolortag = new System.Windows.Forms.Label();   // styd
             this.label7 = new System.Windows.Forms.Label();
             this.floorcolor = new System.Windows.Forms.Panel();
+            this.floorcolortag = new System.Windows.Forms.Label();   // styd
             this.label8 = new System.Windows.Forms.Label();
             this.uppercolor = new System.Windows.Forms.Panel();
+            this.uppercolortag = new System.Windows.Forms.Label();   // styd
             this.label9 = new System.Windows.Forms.Label();
             this.lowercolor = new System.Windows.Forms.Panel();
+            this.lowercolortag = new System.Windows.Forms.Label();   // styd
             this.label10 = new System.Windows.Forms.Label();
             this.thingcolor = new System.Windows.Forms.Panel();
+            this.thingcolortag = new System.Windows.Forms.Label();   // styd
             label5 = new System.Windows.Forms.Label();
             label4 = new System.Windows.Forms.Label();
             label3 = new System.Windows.Forms.Label();
@@ -262,17 +267,22 @@ namespace CodeImp.DoomBuilder.Controls
             // 
             this.lightInfo.Controls.Add(this.label10);
             this.lightInfo.Controls.Add(this.thingcolor);
+            this.lightInfo.Controls.Add(this.thingcolortag);   // styd
             this.lightInfo.Controls.Add(this.label9);
             this.lightInfo.Controls.Add(this.lowercolor);
+            this.lightInfo.Controls.Add(this.lowercolortag);   // styd
             this.lightInfo.Controls.Add(this.label8);
             this.lightInfo.Controls.Add(this.uppercolor);
+            this.lightInfo.Controls.Add(this.uppercolortag);   // styd
             this.lightInfo.Controls.Add(this.label7);
             this.lightInfo.Controls.Add(this.floorcolor);
+            this.lightInfo.Controls.Add(this.floorcolortag);   // styd
             this.lightInfo.Controls.Add(this.label6);
             this.lightInfo.Controls.Add(this.ceilingcolor);
+            this.lightInfo.Controls.Add(this.ceilingcolortag);   // styd
             this.lightInfo.Location = new System.Drawing.Point(462, 3);
             this.lightInfo.Name = "lightInfo";
-            this.lightInfo.Size = new System.Drawing.Size(228, 96);
+            this.lightInfo.Size = new System.Drawing.Size(340, 96);   // styd: widened to fit per-color tag values
             this.lightInfo.TabIndex = 5;
             this.lightInfo.TabStop = false;
             this.lightInfo.Text = "Lights";
@@ -296,6 +306,15 @@ namespace CodeImp.DoomBuilder.Controls
             this.label6.TabIndex = 5;
             this.label6.Text = "Ceiling:";
             // 
+            // ceilingcolortag (styd)
+            // 
+            this.ceilingcolortag.AutoSize = true;
+            this.ceilingcolortag.Location = new System.Drawing.Point(116, 16);
+            this.ceilingcolortag.Name = "ceilingcolortag";
+            this.ceilingcolortag.Size = new System.Drawing.Size(40, 14);
+            this.ceilingcolortag.TabIndex = 14;
+            this.ceilingcolortag.Text = "Tag: 0";
+            // 
             // label7
             // 
             this.label7.AutoSize = true;
@@ -314,6 +333,15 @@ namespace CodeImp.DoomBuilder.Controls
             this.floorcolor.Name = "floorcolor";
             this.floorcolor.Size = new System.Drawing.Size(38, 14);
             this.floorcolor.TabIndex = 6;
+            // 
+            // floorcolortag (styd)
+            // 
+            this.floorcolortag.AutoSize = true;
+            this.floorcolortag.Location = new System.Drawing.Point(116, 36);
+            this.floorcolortag.Name = "floorcolortag";
+            this.floorcolortag.Size = new System.Drawing.Size(40, 14);
+            this.floorcolortag.TabIndex = 15;
+            this.floorcolortag.Text = "Tag: 0";
             // 
             // label8
             // 
@@ -334,6 +362,15 @@ namespace CodeImp.DoomBuilder.Controls
             this.uppercolor.Size = new System.Drawing.Size(38, 14);
             this.uppercolor.TabIndex = 8;
             // 
+            // uppercolortag (styd)
+            // 
+            this.uppercolortag.AutoSize = true;
+            this.uppercolortag.Location = new System.Drawing.Point(116, 56);
+            this.uppercolortag.Name = "uppercolortag";
+            this.uppercolortag.Size = new System.Drawing.Size(40, 14);
+            this.uppercolortag.TabIndex = 16;
+            this.uppercolortag.Text = "Tag: 0";
+            // 
             // label9
             // 
             this.label9.AutoSize = true;
@@ -353,10 +390,19 @@ namespace CodeImp.DoomBuilder.Controls
             this.lowercolor.Size = new System.Drawing.Size(38, 14);
             this.lowercolor.TabIndex = 10;
             // 
+            // lowercolortag (styd)
+            // 
+            this.lowercolortag.AutoSize = true;
+            this.lowercolortag.Location = new System.Drawing.Point(116, 74);
+            this.lowercolortag.Name = "lowercolortag";
+            this.lowercolortag.Size = new System.Drawing.Size(40, 14);
+            this.lowercolortag.TabIndex = 17;
+            this.lowercolortag.Text = "Tag: 0";
+            // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(125, 16);
+            this.label10.Location = new System.Drawing.Point(175, 16);   // styd: shifted right to make room for ceilingcolortag
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(36, 14);
             this.label10.TabIndex = 13;
@@ -367,11 +413,20 @@ namespace CodeImp.DoomBuilder.Controls
             this.thingcolor.BackColor = System.Drawing.SystemColors.Window;
             this.thingcolor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.thingcolor.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.thingcolor.Location = new System.Drawing.Point(167, 16);
+            this.thingcolor.Location = new System.Drawing.Point(217, 16);   // styd: shifted right (was 167)
             this.thingcolor.Name = "thingcolor";
             this.thingcolor.Size = new System.Drawing.Size(38, 14);
             this.thingcolor.TabIndex = 12;
             // 
+            // thingcolortag (styd)
+            // 
+            this.thingcolortag.AutoSize = true;
+            this.thingcolortag.Location = new System.Drawing.Point(259, 16);
+            this.thingcolortag.Name = "thingcolortag";
+            this.thingcolortag.Size = new System.Drawing.Size(40, 14);
+            this.thingcolortag.TabIndex = 18;
+            this.thingcolortag.Text = "Tag: 0";
+            //
             // SectorInfoPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -384,7 +439,7 @@ namespace CodeImp.DoomBuilder.Controls
             this.MaximumSize = new System.Drawing.Size(10000, 100);
             this.MinimumSize = new System.Drawing.Size(100, 100);
             this.Name = "SectorInfoPanel";
-            this.Size = new System.Drawing.Size(690, 100);
+            this.Size = new System.Drawing.Size(820, 100); // styd: widened for the Lights tag columns
             this.sectorinfo.ResumeLayout(false);
             this.sectorinfo.PerformLayout();
             this.ceilingpanel.ResumeLayout(false);
@@ -422,5 +477,11 @@ namespace CodeImp.DoomBuilder.Controls
         private System.Windows.Forms.Panel thingcolor;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Panel lowercolor;
-	}
+        private System.Windows.Forms.Label ceilingcolortag;   // styd
+        private System.Windows.Forms.Label floorcolortag;   // styd
+        private System.Windows.Forms.Label uppercolortag;   // styd
+        private System.Windows.Forms.Label lowercolortag;   // styd
+        private System.Windows.Forms.Label thingcolortag;   // styd
+    }
 }
+	

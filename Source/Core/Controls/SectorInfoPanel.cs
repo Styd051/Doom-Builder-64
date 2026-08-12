@@ -83,8 +83,15 @@ namespace CodeImp.DoomBuilder.Controls
             uppercolor.BackColor = s.TopColor.color.ToColor();
             lowercolor.BackColor = s.LowerColor.color.ToColor();
 
-			// Show the whole thing
-			this.Show();
+            // styd: show the tag associated with each color, same info as the Edit Sector > Lights tab
+            ceilingcolortag.Text = "Tag: " + s.CeilColor.tag;
+            floorcolortag.Text = "Tag: " + s.FloorColor.tag;
+            thingcolortag.Text = "Tag: " + s.ThingColor.tag;
+            uppercolortag.Text = "Tag: " + s.TopColor.tag;
+            lowercolortag.Text = "Tag: " + s.LowerColor.tag;
+
+            // Show the whole thing
+            this.Show();
 			this.Update();
 		}
 
