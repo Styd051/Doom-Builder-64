@@ -122,103 +122,128 @@ namespace CodeImp.DoomBuilder.Windows
             }
 		}
 
-        // villsa 9/12/11
+        // villsa 9/12/11 (rewritten styd: corrected against DOOM64-RE - see
+        // P_ChangeSwitchTexture in p_switch.c and R_WallPrep in r_phase3.c)
         private void SwitchTextureMask(Linedef l)
         {
-            int switchflags = 0;
-            int mask = 0;
+            int texture, display;
+            GetSwitchChoice(l, out texture, out display);
 
-            if ((l.SwitchMask & 0x2000) == 0x2000)
-                switchflags |= 0x2000;
+            if (texture == 1) chkSwitchTextureUpper.Checked = true;       // ML_SWITCHX02 alone ("Top")
+            else if (texture == 2) chkSwitchTextureLower.Checked = true;  // ML_SWITCHX04 alone ("Bot")
+            else if (texture == 3) chkSwitchTextureMiddle.Checked = true; // both ("Mid")
 
-            if ((l.SwitchMask & 0x4000) == 0x4000)
-                switchflags |= 0x4000;
+            if (display == 1) chkSwitchDisplayUpper.Checked = true;       // ML_SWITCHX08 alone
+            else if (display == 2) chkSwitchDisplayLower.Checked = true;  // ML_CHECKFLOORHEIGHT alone
+            else if (display == 3) chkSwitchDisplayMiddle.Checked = true; // both
+        }
 
-            if ((l.SwitchMask & 0x8000) == 0x8000)
-                switchflags |= 0x8000;
-
-            if (l.IsFlagSet("65536"))
-                switchflags |= 65536;
-
-            mask = (switchflags & 0x6000);
-
-            if (mask == 0)
+        // villsa 9/12/11 (rewritten styd: corrected against DOOM64-RE - see
+        // P_ChangeSwitchTexture in p_switch.c and R_WallPrep in r_phase3.c)
+        private void SetSwitchMask(Linedef l)
+        {
+            // styd: this is called unconditionally from apply_Click() regardless of game
+            // mode. Switch Setup only exists for Doom 64, so bail out for other formats -
+            // otherwise the "65536" (ML_CHECKFLOORHEIGHT) flag below would get written
+            // into non-Doom64 maps (Hexen/UDMF) every time this dialog is used.
+            if (!General.Map.FormatInterface.InDoom64Mode)
                 return;
 
-            if (mask == 0x2000)
-            {
-                chkSwitchTextureUpper.Checked = true;
+            // styd: if any of the 6 switch checkboxes is still in its "mixed / untouched"
+            // indeterminate state (multi-selection differs and the user didn't touch this
+            // group), leave this linedef's SwitchMask exactly as it was instead of
+            // clobbering it. This replaces the old ".Enabled == false" guard that used to
+            // block Switch Setup entirely for multi-selection.
+            if (chkSwitchTextureUpper.CheckState == CheckState.Indeterminate ||
+                chkSwitchTextureMiddle.CheckState == CheckState.Indeterminate ||
+                chkSwitchTextureLower.CheckState == CheckState.Indeterminate ||
+                chkSwitchDisplayUpper.CheckState == CheckState.Indeterminate ||
+                chkSwitchDisplayMiddle.CheckState == CheckState.Indeterminate ||
+                chkSwitchDisplayLower.CheckState == CheckState.Indeterminate)
+                return;
 
-                if((switchflags & 0x8000) == 0x8000)
-                    chkSwitchDisplayMiddle.Checked = true;
-                else
-                    chkSwitchDisplayLower.Checked = true;
+            // styd: texture slot that carries/animates the switch graphic - confirmed
+            // against SWITCHMASK()/P_ChangeSwitchTexture in DOOM64-RE (p_switch.c):
+            // ML_SWITCHX02 alone = Top, ML_SWITCHX04 alone = Bot, both = Mid.
+            int texbits = 0;
+            if (chkSwitchTextureUpper.Checked) texbits = 0x2000;
+            else if (chkSwitchTextureLower.Checked) texbits = 0x4000;
+            else if (chkSwitchTextureMiddle.Checked) texbits = (0x2000 | 0x4000);
+
+            // styd: display position of the static switch decal - confirmed against
+            // R_WallPrep's 3 R_RenderSwitch call sites in DOOM64-RE (r_phase3.c), which
+            // are gated purely by ML_SWITCHX08 / ML_CHECKFLOORHEIGHT, INDEPENDENTLY of
+            // the texture bits above:
+            //   SWITCHX08 alone        -> near the ceiling ("Upper")
+            //   CHECKFLOORHEIGHT alone -> near the floor ("Lower")
+            //   both                   -> near the middle ("Middle")
+            //   neither                -> no decal drawn at all
+            // The old code never set CHECKFLOORHEIGHT here at all, so "Middle" and
+            // "Lower" either showed no switch in-game or silently collapsed to the same
+            // ceiling position as "Upper".
+            bool dispUpper = chkSwitchDisplayUpper.Checked;
+            bool dispLower = chkSwitchDisplayLower.Checked;
+            bool dispMiddle = chkSwitchDisplayMiddle.Checked;
+
+            if (texbits != 0 && (dispUpper || dispLower || dispMiddle))
+            {
+                if (dispUpper || dispMiddle)
+                    texbits |= 0x8000; // ML_SWITCHX08
+
+                l.SwitchMask = texbits;
+
+                // styd: ML_CHECKFLOORHEIGHT (0x10000) is exposed as its own "Switch
+                // Check Height" checkbox in the general Settings flags list rather than
+                // living in SwitchMask - keep it in sync with the Display choice here.
+                l.SetFlag("65536", dispLower || dispMiddle);
             }
-            else if (mask == 0x4000)
+            else
             {
-                chkSwitchTextureLower.Checked = true;
-
-                if ((switchflags & 0x10000) == 0x10000)
-                    chkSwitchDisplayMiddle.Checked = true;
-                else if ((switchflags & 0x8000) == 0x8000)
-                    chkSwitchDisplayUpper.Checked = true;
-            }
-            else if(mask == 0x6000)
-            {
-                chkSwitchTextureMiddle.Checked = true;
-
-                if ((switchflags & 0x8000) == 0x8000)
-                    chkSwitchDisplayUpper.Checked = true;
-                else
-                    chkSwitchDisplayLower.Checked = true;
+                l.SwitchMask = 0;
+                l.SetFlag("65536", false);
             }
         }
 
-        // villsa 9/12/11
-        private void SetSwitchMask(Linedef l)
+        // styd: read-only decode, used both to seed the checkboxes (SwitchTextureMask)
+        // and to compare linedefs against each other during multi-selection, without
+        // mutating any UI state. texture: 0=none, 1=Upper(Top), 2=Lower(Bot), 3=Middle(Mid).
+        // display: 0=none, 1=Upper(SWITCHX08 alone), 2=Lower(CHECKFLOORHEIGHT alone),
+        // 3=Middle(both). Corrected against DOOM64-RE: texture from SWITCHMASK()
+        // (p_switch.c), display from the independent SWITCHX08/CHECKFLOORHEIGHT pair
+        // (r_phase3.c R_WallPrep) - see SetSwitchMask() above for the full reasoning.
+        private void GetSwitchChoice(Linedef l, out int texture, out int display)
         {
-            int switchflags = 0;
+            texture = 0;
+            display = 0;
 
-            // just check for one of the checkboxes.. no need to
-            // check for all of them..
-            if (chkSwitchTextureLower.Enabled == false)
-                return;
+            int mask = l.SwitchMask & 0x6000;
+            if (mask == 0x2000) texture = 1;
+            else if (mask == 0x4000) texture = 2;
+            else if (mask == 0x6000) texture = 3;
 
-            if (chkSwitchTextureLower.Checked == true)
-            {
-                if (chkSwitchDisplayMiddle.Checked == true)
-                {
-                    switchflags = 0x4000;
-                }
-                else if (chkSwitchDisplayUpper.Checked == true)
-                {
-                    switchflags = (0x4000 | 0x8000);
-                }
-            }
-            else if (chkSwitchTextureMiddle.Checked == true)
-            {
-                if (chkSwitchDisplayLower.Checked == true)
-                {
-                    switchflags = (0x2000 | 0x4000);
-                }
-                else if (chkSwitchDisplayUpper.Checked == true)
-                {
-                    switchflags = (0x2000 | 0x4000 | 0x8000);
-                }
-            }
-            else if (chkSwitchTextureUpper.Checked == true)
-            {
-                if (chkSwitchDisplayMiddle.Checked == true)
-                {
-                    switchflags = (0x2000 | 0x8000);
-                }
-                else if (chkSwitchDisplayLower.Checked == true)
-                {
-                    switchflags = 0x2000;
-                }
-            }
+            bool switchx08 = (l.SwitchMask & 0x8000) == 0x8000;
+            bool checkfloorheight = l.IsFlagSet("65536");
 
-            l.SwitchMask = switchflags;
+            if (switchx08 && checkfloorheight) display = 3;
+            else if (switchx08) display = 1;
+            else if (checkfloorheight) display = 2;
+        }
+
+        // styd: compares one linedef's boolean state for a single Switch Setup checkbox
+        // against the checkbox's current (seeded) state, and marks it indeterminate on
+        // mismatch - same convention as CheckActivationState() for Activation Type, so
+        // only the checkboxes that actually differ across the selection turn gray;
+        // the rest keep showing the first linedef's value.
+        private void CheckSwitchCheckboxState(CheckBox c, bool linedefValue)
+        {
+            if (c.CheckState == CheckState.Indeterminate)
+                return; // already flagged as mixed by an earlier linedef in this selection
+
+            if (linedefValue != c.Checked)
+            {
+                c.ThreeState = true;
+                c.CheckState = CheckState.Indeterminate;
+            }
         }
 
         private void PreSetActivationFlag(CheckBox c, int flag, int mask)
@@ -253,34 +278,24 @@ namespace CodeImp.DoomBuilder.Windows
 			// Keep this list
 			this.lines = lines;
 			if(lines.Count > 1) this.Text = "Edit Linedefs (" + lines.Count + ")";
-			
-			////////////////////////////////////////////////////////////////////////
-			// Set all options to the first linedef properties
-			////////////////////////////////////////////////////////////////////////
 
-            // 20120219 villsa - Disable checkboxes if multiple lines are selected...
-            // I am lazy, go away...
-            if (lines.Count > 1)
-            {
-                chkSwitchTextureLower.Enabled = false;
-                chkSwitchTextureMiddle.Enabled = false;
-                chkSwitchTextureUpper.Enabled = false;
-                chkSwitchDisplayLower.Enabled = false;
-                chkSwitchDisplayMiddle.Enabled = false;
-                chkSwitchDisplayUpper.Enabled = false;
-            }
-            else
-            {
-                chkSwitchTextureLower.Enabled = true;
-                chkSwitchTextureMiddle.Enabled = true;
-                chkSwitchTextureUpper.Enabled = true;
-                chkSwitchDisplayLower.Enabled = true;
-                chkSwitchDisplayMiddle.Enabled = true;
-                chkSwitchDisplayUpper.Enabled = true;
-            }
+            ////////////////////////////////////////////////////////////////////////
+            // Set all options to the first linedef properties
+            ////////////////////////////////////////////////////////////////////////
 
-			// Get first line
-			fl = General.GetByIndex(lines, 0);
+            // styd: Switch Setup used to be entirely disabled for multi-selection
+            // ("20120219 villsa - I am lazy, go away..."). It now stays usable and
+            // uses the same indeterminate (mixed) tri-state as the rest of the form -
+            // see the "for all lines" loop below and SetSwitchMask().
+            chkSwitchTextureLower.Enabled = true;
+            chkSwitchTextureMiddle.Enabled = true;
+            chkSwitchTextureUpper.Enabled = true;
+            chkSwitchDisplayLower.Enabled = true;
+            chkSwitchDisplayMiddle.Enabled = true;
+            chkSwitchDisplayUpper.Enabled = true;
+
+            // Get first line
+            fl = General.GetByIndex(lines, 0);
 			
 			// Flags
 			foreach(CheckBox c in flags.Checkboxes)
@@ -297,17 +312,26 @@ namespace CodeImp.DoomBuilder.Windows
 				if(fl.Flags.ContainsKey(ai.Key)) c.Checked = fl.Flags[ai.Key];
 			}
 
-			// Action/tags
-			action.Value = fl.Action;
-			tag.Text = fl.Tag.ToString();
-			arg0.SetValue(fl.Args[0]);
-			arg1.SetValue(fl.Args[1]);
-			arg2.SetValue(fl.Args[2]);
-			arg3.SetValue(fl.Args[3]);
-			arg4.SetValue(fl.Args[4]);
-			
-			// Front side and back side checkboxes
-			frontside.Checked = (fl.Front != null);
+            // Action/tags
+            action.Value = fl.Action;
+            tag.Text = fl.Tag.ToString();
+            arg0.SetValue(fl.Args[0]);
+            arg1.SetValue(fl.Args[1]);
+            arg2.SetValue(fl.Args[2]);
+            arg3.SetValue(fl.Args[3]);
+            arg4.SetValue(fl.Args[4]);
+
+            // styd: seed the Switch Setup checkboxes from the first selected linedef -
+            // the "for all lines" loop below then compares each checkbox independently
+            // (CheckSwitchCheckboxState) against this seeded state, same convention as
+            // Activation Type.
+            if (General.Map.FormatInterface.InDoom64Mode)
+            {
+                SwitchTextureMask(fl);
+            }
+
+            // Front side and back side checkboxes
+            frontside.Checked = (fl.Front != null);
 			backside.Checked = (fl.Back != null);
 
 			// Front settings
@@ -379,7 +403,20 @@ namespace CodeImp.DoomBuilder.Windows
                         PreSetActivationFlag(activationtyperepeat, l.Activate, 32768);
                     }
 
-                    SwitchTextureMask(l);
+                    // styd: multi-selection support - compare each Switch Setup checkbox
+                    // independently against this linedef, same convention as Activation
+                    // Type (CheckActivationState) and the general Flags list: only the
+                    // checkboxes that actually differ across the selection turn
+                    // indeterminate (gray), the rest keep showing the first linedef's
+                    // value in plain white/unchecked.
+                    int ltexture, ldisplay;
+                    GetSwitchChoice(l, out ltexture, out ldisplay);
+                    CheckSwitchCheckboxState(chkSwitchTextureUpper, ltexture == 1);
+                    CheckSwitchCheckboxState(chkSwitchTextureLower, ltexture == 2);
+                    CheckSwitchCheckboxState(chkSwitchTextureMiddle, ltexture == 3);
+                    CheckSwitchCheckboxState(chkSwitchDisplayUpper, ldisplay == 1);
+                    CheckSwitchCheckboxState(chkSwitchDisplayLower, ldisplay == 2);
+                    CheckSwitchCheckboxState(chkSwitchDisplayMiddle, ldisplay == 3);
                 }
                 else
                 {
@@ -911,7 +948,10 @@ namespace CodeImp.DoomBuilder.Windows
 
         private void chkSwitchDisplayUpper_CheckedChanged_1(object sender, EventArgs e)
         {
-            if (this.chkSwitchDisplayUpper.Checked)
+            // styd: .Checked is ALSO true for CheckState.Indeterminate in WinForms,
+            // which made this cascade fire and wipe out sibling checkboxes' mixed
+            // state during multi-selection. Only cascade when definitely checked.
+            if (this.chkSwitchDisplayUpper.CheckState == CheckState.Checked)
             {
                 this.chkSwitchDisplayLower.Checked = false;
                 this.chkSwitchDisplayMiddle.Checked = false;
@@ -920,7 +960,10 @@ namespace CodeImp.DoomBuilder.Windows
 
         private void chkSwitchDisplayMiddle_CheckedChanged_1(object sender, EventArgs e)
         {
-            if (this.chkSwitchDisplayMiddle.Checked)
+            // styd: .Checked is ALSO true for CheckState.Indeterminate in WinForms,
+            // which made this cascade fire and wipe out sibling checkboxes' mixed
+            // state during multi-selection. Only cascade when definitely checked.
+            if (this.chkSwitchDisplayMiddle.CheckState == CheckState.Checked)
             {
                 this.chkSwitchDisplayLower.Checked = false;
                 this.chkSwitchDisplayUpper.Checked = false;
@@ -929,7 +972,10 @@ namespace CodeImp.DoomBuilder.Windows
 
         private void chkSwitchDisplayLower_CheckedChanged_1(object sender, EventArgs e)
         {
-            if (this.chkSwitchDisplayLower.Checked)
+            // styd: .Checked is ALSO true for CheckState.Indeterminate in WinForms,
+            // which made this cascade fire and wipe out sibling checkboxes' mixed
+            // state during multi-selection. Only cascade when definitely checked.
+            if (this.chkSwitchDisplayLower.CheckState == CheckState.Checked)
             {
                 this.chkSwitchDisplayUpper.Checked = false;
                 this.chkSwitchDisplayMiddle.Checked = false;
@@ -938,7 +984,10 @@ namespace CodeImp.DoomBuilder.Windows
 
         private void chkSwitchTextureUpper_CheckedChanged_1(object sender, EventArgs e)
         {
-            if (this.chkSwitchTextureUpper.Checked)
+            // styd: .Checked is ALSO true for CheckState.Indeterminate in WinForms,
+            // which made this cascade fire and wipe out sibling checkboxes' mixed
+            // state during multi-selection. Only cascade when definitely checked.
+            if (this.chkSwitchTextureUpper.CheckState == CheckState.Checked)
             {
                 this.chkSwitchTextureLower.Checked = false;
                 this.chkSwitchTextureMiddle.Checked = false;
@@ -947,7 +996,10 @@ namespace CodeImp.DoomBuilder.Windows
 
         private void chkSwitchTextureMiddle_CheckedChanged_1(object sender, EventArgs e)
         {
-            if (this.chkSwitchTextureMiddle.Checked)
+            // styd: .Checked is ALSO true for CheckState.Indeterminate in WinForms,
+            // which made this cascade fire and wipe out sibling checkboxes' mixed
+            // state during multi-selection. Only cascade when definitely checked.
+            if (this.chkSwitchTextureMiddle.CheckState == CheckState.Checked)
             {
                 this.chkSwitchTextureLower.Checked = false;
                 this.chkSwitchTextureUpper.Checked = false;
@@ -956,7 +1008,10 @@ namespace CodeImp.DoomBuilder.Windows
 
         private void chkSwitchTextureLower_CheckedChanged_1(object sender, EventArgs e)
         {
-            if (this.chkSwitchTextureLower.Checked)
+            // styd: .Checked is ALSO true for CheckState.Indeterminate in WinForms,
+            // which made this cascade fire and wipe out sibling checkboxes' mixed
+            // state during multi-selection. Only cascade when definitely checked.
+            if (this.chkSwitchTextureLower.CheckState == CheckState.Checked)
             {
                 this.chkSwitchTextureUpper.Checked = false;
                 this.chkSwitchTextureMiddle.Checked = false;
