@@ -22,6 +22,18 @@ namespace CodeImp.DoomBuilder.BuilderModes
 
         #endregion
 
+        #region ================== Variables
+
+        // styd: along-the-line center/direction/half-width of the decal, used by our
+        // PickFastReject override to reject hits that are outside our actual 32-unit
+        // horizontal span. Set at the end of a successful Setup(). See PickFastReject
+        // for why this is necessary (the base class only checks the Z/height range).
+        private Vector2D pickCenter;
+        private Vector2D pickDir;
+        private float pickHalfWidth;
+
+        #endregion
+
         #region ================== Constructor / Setup
 
         public VisualSwitchDecal(BaseVisualMode mode, VisualSector vs, Sidedef s) : base(mode, vs, s)
@@ -198,12 +210,41 @@ namespace CodeImp.DoomBuilder.BuilderModes
             base.top = topY;
             base.bottom = bottomY;
             base.SetVertices(verts);
+
+            // styd: remember the decal's actual horizontal span for PickFastReject -
+            // center (unoffset by the z-fighting normal nudge is fine, it's perpendicular
+            // to dir so it doesn't change the along-line projection), direction and
+            // half-width, matching what was just used to build p1/p2 above.
+            pickCenter = center;
+            pickDir = dir;
+            pickHalfWidth = half;
+
             return true;
         }
 
         #endregion
 
         #region ================== Methods
+
+        // This performs a fast test in object picking
+        public override bool PickFastReject(Vector3D from, Vector3D to, Vector3D dir)
+        {
+            // Same Z/height check as the base class (BaseVisualGeometrySidedef)
+            if (!((pickintersect.z >= bottom) && (pickintersect.z <= top)))
+                return false;
+
+            // styd: the base implementation stops at the Z check because a normal
+            // upper/middle/lower texture always spans the linedef's FULL length
+            // horizontally - any point in range on Z is necessarily "inside" it. That
+            // assumption doesn't hold for us: we're a fixed 32-unit decal centered on
+            // the line, which is often much shorter than the line itself (e.g. a
+            // 128-unit line with a 32-unit switch in the middle). Without this check,
+            // aiming left or right of the decal - but still within its Z band - would
+            // wrongly pick the switch instead of the wall texture beside it.
+            Vector2D hit2d = new Vector2D(pickintersect.x, pickintersect.y);
+            float along = Vector2D.DotProduct(hit2d - pickCenter, pickDir);
+            return Math.Abs(along) <= pickHalfWidth;
+        }
 
         public override string GetTextureName()
         {
