@@ -37,18 +37,19 @@ namespace CodeImp.DoomBuilder.Windows
 {
 	internal partial class SectorEditForm : DelayedForm
 	{
-		// Variables
-		private ICollection<Sector> sectors;
+        // Variables
+        private ICollection<Sector> sectors;
         private PixelColor color;
         private PixelColor[] initialcolor;
         private int[] initialtags;   // styd: remembers the tag of each color on load
+        private string[] initialindex;   // styd: remembers the displayed physical LIGHTS index of each color on load
         private List<float>[] intensitysteps;   // styd: sequence of clicks +/- per slot (0=Ceiling, 1=Top, 2=Thing, 3=Lower, 4=Floor)
         private PixelColor[] expectedcolor;   // styd: expected color if only following the +/- clicks, without manual adjustment
         private const float LIGHTINCVALUE = 0.235f;
         private const float LIGHTDECVALUE = -0.1825f;
 
-		// Constructor
-		public SectorEditForm()
+        // Constructor
+        public SectorEditForm()
 		{
 			// Initialize
 			InitializeComponent();
@@ -56,6 +57,7 @@ namespace CodeImp.DoomBuilder.Windows
             color = new PixelColor(255, 255, 255, 255);
             initialcolor = new PixelColor[Sector.NUM_COLORS];
             initialtags = new int[Sector.NUM_COLORS];   // styd
+            initialindex = new string[Sector.NUM_COLORS];   // styd
 
             // styd
             intensitysteps = new List<float>[Sector.NUM_COLORS];
@@ -138,6 +140,14 @@ namespace CodeImp.DoomBuilder.Windows
                 thingcolortag.Text = (initialtags[2] = sc.ThingColor.tag).ToString();
                 lowercolortag.Text = (initialtags[3] = sc.LowerColor.tag).ToString();
                 floorcolortag.Text = (initialtags[4] = sc.FloorColor.tag).ToString();
+
+                // styd: load the physical LIGHTS index by color, matching DEX Editor's
+                // "Light NNN" field
+                ceilingcolor.IndexText = initialindex[0] = Lights.GetDisplayIndex(sc.CeilColor);
+                topcolor.IndexText = initialindex[1] = Lights.GetDisplayIndex(sc.TopColor);
+                thingcolor.IndexText = initialindex[2] = Lights.GetDisplayIndex(sc.ThingColor);
+                lowercolor.IndexText = initialindex[3] = Lights.GetDisplayIndex(sc.LowerColor);
+                floorcolor.IndexText = initialindex[4] = Lights.GetDisplayIndex(sc.FloorColor);
 
                 // styd: start from scratch each time the window is opened
                 foreach (List<float> l in intensitysteps) l.Clear();
@@ -247,21 +257,24 @@ namespace CodeImp.DoomBuilder.Windows
 			}
 		}
 
-        // styd: applies color (absolute OR relative via intensitysteps) + tag to a slot,
-        // preserving isDirect for untouched slots, and allows combining
+        // styd: applies color (absolute OR relative via intensitysteps) + tag + physical
+        // index to a slot, preserving isDirect for untouched slots, and allows combining
         // +/- clicks AND manual retouching in the same edit
         private void ApplyColorSlot(Lights current, ColorControlSector colorctrl, ButtonsNumericTextbox tagctrl,
-            PixelColor initcolor, int inittag, List<float> steps, PixelColor expected, Action<Lights> setter)
+            PixelColor initcolor, int inittag, string initindex,
+            List<float> steps, PixelColor expected, Action<Lights> setter)
         {
             int newtag = tagctrl.GetResult(inittag);
             bool tagchanged = (newtag != inittag);
             bool colorchanged = (initcolor.ToColor() != colorctrl.Color.ToColor());
             bool hasintensitysteps = (steps.Count > 0);
+            string newindextext = colorctrl.IndexText.Trim();
+            bool indexchanged = (newindextext != initindex);
 
             // styd: Did we follow the exact sequence of clicks, without any manual retouching afterwards?
             bool followedstepsonly = hasintensitysteps && (colorctrl.Color.ToColor() == expected.ToColor());
 
-            if (!colorchanged && !tagchanged)
+            if (!colorchanged && !tagchanged && !indexchanged)
                 return;
 
             Lights light = current;   // share of values ​​specific to this sector
@@ -282,6 +295,40 @@ namespace CodeImp.DoomBuilder.Windows
             {
                 light.tag = (UInt16)General.Clamp(newtag, General.Map.FormatInterface.MinTag, General.Map.FormatInterface.MaxTag);
                 if (light.tag != 0) light.isDirect = false;
+            }
+
+            // styd: manual physical LIGHTS index editing, reproducing DEX Editor's "Light
+            // NNN" field. See AddLightGetIndex() in Doom64MapSetIO.cs for how a requested
+            // index >= 256 is honored on save (only actually shared if the RGB+tag also
+            // match another entry at that same original position - typing a number here
+            // does not by itself copy the color from that slot).
+            if (indexchanged)
+            {
+                int newindex;
+                if (newindextext.Length == 0)
+                {
+                    // Cleared - stop requesting a specific shared slot, fall back to the
+                    // automatic dedup rules in AddLightGetIndex() at save time
+                    light.hasOriginalIndex = false;
+                }
+                else if (int.TryParse(newindextext, out newindex))
+                {
+                    if (newindex >= 256)
+                    {
+                        light.hasOriginalIndex = true;
+                        light.originalIndex = newindex - 256;
+                    }
+                    else
+                    {
+                        // Direct grayscale index, exactly like DEX: the number itself is
+                        // the gray value
+                        byte g = (byte)General.Clamp(newindex, 0, 255);
+                        light.color = new PixelColor(255, g, g, g);
+                        light.tag = 0;
+                        light.isDirect = true;
+                        light.hasOriginalIndex = false;
+                    }
+                }
             }
 
             setter(light);
@@ -334,11 +381,11 @@ namespace CodeImp.DoomBuilder.Windows
                     // color lights + tags
                     //
 
-                    ApplyColorSlot(s.CeilColor, ceilingcolor, ceilingcolortag, initialcolor[0], initialtags[0], intensitysteps[0], expectedcolor[0], v => s.CeilColor = v);
-                    ApplyColorSlot(s.TopColor, topcolor, topcolortag, initialcolor[1], initialtags[1], intensitysteps[1], expectedcolor[1], v => s.TopColor = v);
-                    ApplyColorSlot(s.ThingColor, thingcolor, thingcolortag, initialcolor[2], initialtags[2], intensitysteps[2], expectedcolor[2], v => s.ThingColor = v);
-                    ApplyColorSlot(s.LowerColor, lowercolor, lowercolortag, initialcolor[3], initialtags[3], intensitysteps[3], expectedcolor[3], v => s.LowerColor = v);
-                    ApplyColorSlot(s.FloorColor, floorcolor, floorcolortag, initialcolor[4], initialtags[4], intensitysteps[4], expectedcolor[4], v => s.FloorColor = v);
+                    ApplyColorSlot(s.CeilColor, ceilingcolor, ceilingcolortag, initialcolor[0], initialtags[0], initialindex[0], intensitysteps[0], expectedcolor[0], v => s.CeilColor = v);
+                    ApplyColorSlot(s.TopColor, topcolor, topcolortag, initialcolor[1], initialtags[1], initialindex[1], intensitysteps[1], expectedcolor[1], v => s.TopColor = v);
+                    ApplyColorSlot(s.ThingColor, thingcolor, thingcolortag, initialcolor[2], initialtags[2], initialindex[2], intensitysteps[2], expectedcolor[2], v => s.ThingColor = v);
+                    ApplyColorSlot(s.LowerColor, lowercolor, lowercolortag, initialcolor[3], initialtags[3], initialindex[3], intensitysteps[3], expectedcolor[3], v => s.LowerColor = v);
+                    ApplyColorSlot(s.FloorColor, floorcolor, floorcolortag, initialcolor[4], initialtags[4], initialindex[4], intensitysteps[4], expectedcolor[4], v => s.FloorColor = v);
                 }
 
 				// Effects
@@ -381,8 +428,35 @@ namespace CodeImp.DoomBuilder.Windows
 			tag.Text = General.Map.Map.GetNewTag().ToString();
 		}
 
-		// Browse Effect clicked
-		private void browseeffect_Click(object sender, EventArgs e)
+        // styd: same "find a new unused tag" behavior as the sector's own New Tag button,
+        // applied per color
+        private void ceilingcolornewtag_Click(object sender, EventArgs e)
+        {
+            ceilingcolortag.Text = General.Map.Map.GetNewTag().ToString();
+        }
+
+        private void topcolornewtag_Click(object sender, EventArgs e)
+        {
+            topcolortag.Text = General.Map.Map.GetNewTag().ToString();
+        }
+
+        private void thingcolornewtag_Click(object sender, EventArgs e)
+        {
+            thingcolortag.Text = General.Map.Map.GetNewTag().ToString();
+        }
+
+        private void lowercolornewtag_Click(object sender, EventArgs e)
+        {
+            lowercolortag.Text = General.Map.Map.GetNewTag().ToString();
+        }
+
+        private void floorcolornewtag_Click(object sender, EventArgs e)
+        {
+            floorcolortag.Text = General.Map.Map.GetNewTag().ToString();
+        }
+
+        // Browse Effect clicked
+        private void browseeffect_Click(object sender, EventArgs e)
 		{
 			effect.Value = EffectBrowserForm.BrowseEffect(this, effect.Value);
 		}

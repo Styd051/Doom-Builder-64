@@ -41,6 +41,15 @@ namespace CodeImp.DoomBuilder.Map
         public UInt16 tag;
         public bool isDirect;   // styd: true if loaded as a direct index (<256), false if actual LIGHTS input (≥256)
 
+        // styd: raw LIGHTS-lump index this value was loaded from, only meaningful when
+        // hasOriginalIndex is true. Populated by Doom64MapSetIO.ReadSectors() from an
+        // existing WAD, or set manually via the "Index" field in the Edit Sector > Lights
+        // tab (matching DEX Editor's "Light NNN" field). Used by AddLightGetIndex() to
+        // restore/request exact physical sharing between sectors on save, regardless of
+        // their Sector.Tag.
+        public int originalIndex;
+        public bool hasOriginalIndex;
+
         #endregion
 
         #region ================== Constructor / Disposer
@@ -53,6 +62,8 @@ namespace CodeImp.DoomBuilder.Map
             this.color.a = 255;
             this.tag = tag;
             this.isDirect = true;   // Default value for a color created "from scratch" (not loaded from a file)
+            this.originalIndex = -1;
+            this.hasOriginalIndex = false;
         }
 
         #endregion
@@ -407,6 +418,18 @@ namespace CodeImp.DoomBuilder.Map
             int[] hsv = GetHSV(this.color);
             hsv[2] = Math.Min((int)((float)hsv[2] * factor), 255);
             this.color = GetRGB(hsv);
+        }
+
+        // styd: computes the raw LIGHTS-lump index to display for a color slot, matching
+        // how DEX Editor shows/edits this value directly (e.g. "Light 258"). Returns "" when
+        // there's no known physical slot yet (a freshly-created, non-gray color that will get
+        // a fresh entry assigned automatically on save). Shared between SectorEditForm's
+        // Lights tab and SectorInfoPanel's preview.
+        public static string GetDisplayIndex(Lights l)
+        {
+            if (l.hasOriginalIndex) return (256 + l.originalIndex).ToString();
+            if (l.isDirect) return l.color.r.ToString();
+            return "";
         }
 
         #endregion

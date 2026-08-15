@@ -33,6 +33,7 @@ namespace CodeImp.DoomBuilder.Controls
             this.button = new System.Windows.Forms.Button();
             this.dialog = new System.Windows.Forms.ColorDialog();
             this.Hexbox = new System.Windows.Forms.TextBox();
+            this.indexbox = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();   // styd
             this.SuspendLayout();
             // 
             // label
@@ -44,11 +45,23 @@ namespace CodeImp.DoomBuilder.Controls
             this.label.Text = "Color name:";
             this.label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // indexbox (styd)
+            // 
+            this.indexbox.AllowDecimal = false;
+            this.indexbox.AllowNegative = false;
+            this.indexbox.AllowRelative = false;
+            this.indexbox.ButtonStep = 1;
+            this.indexbox.Location = new System.Drawing.Point(175, 0);
+            this.indexbox.Name = "indexbox";
+            this.indexbox.Size = new System.Drawing.Size(55, 23);
+            this.indexbox.StepValues = null;
+            this.indexbox.TabIndex = 4;
+            // 
             // panel
             // 
             this.panel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
             this.panel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.panel.Location = new System.Drawing.Point(178, 0);
+            this.panel.Location = new System.Drawing.Point(238, 0);
             this.panel.Name = "panel";
             this.panel.Size = new System.Drawing.Size(27, 23);
             this.panel.TabIndex = 1;
@@ -59,7 +72,7 @@ namespace CodeImp.DoomBuilder.Controls
             this.button.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.button.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.button.Image = global::CodeImp.DoomBuilder.Properties.Resources.ColorPick;
-            this.button.Location = new System.Drawing.Point(233, 0);
+            this.button.Location = new System.Drawing.Point(293, 0);
             this.button.Name = "button";
             this.button.Padding = new System.Windows.Forms.Padding(0, 0, 2, 3);
             this.button.Size = new System.Drawing.Size(26, 23);
@@ -77,7 +90,7 @@ namespace CodeImp.DoomBuilder.Controls
             // Hexbox
             // 
             this.Hexbox.Font = new System.Drawing.Font("Arial", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Hexbox.Location = new System.Drawing.Point(265, 0);
+            this.Hexbox.Location = new System.Drawing.Point(325, 0);
             this.Hexbox.Name = "Hexbox";
             this.Hexbox.Size = new System.Drawing.Size(72, 21);
             this.Hexbox.TabIndex = 3;
@@ -91,12 +104,13 @@ namespace CodeImp.DoomBuilder.Controls
             this.Controls.Add(this.Hexbox);
             this.Controls.Add(this.button);
             this.Controls.Add(this.panel);
+            this.Controls.Add(this.indexbox);
             this.Controls.Add(this.label);
             this.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MaximumSize = new System.Drawing.Size(10000, 23);
-            this.MinimumSize = new System.Drawing.Size(100, 23);
+            this.MinimumSize = new System.Drawing.Size(160, 23);
             this.Name = "ColorControlSector";
-            this.Size = new System.Drawing.Size(352, 23);
+            this.Size = new System.Drawing.Size(412, 23);
             this.Resize += new System.EventHandler(this.ColorControlSector_Resize);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -110,5 +124,6 @@ namespace CodeImp.DoomBuilder.Controls
         private System.Windows.Forms.Button button;
         private System.Windows.Forms.ColorDialog dialog;
         private System.Windows.Forms.TextBox Hexbox;
+        private CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox indexbox;   // styd
     }
 }

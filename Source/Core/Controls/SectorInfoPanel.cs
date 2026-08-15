@@ -90,6 +90,14 @@ namespace CodeImp.DoomBuilder.Controls
             uppercolortag.Text = "Tag: " + s.TopColor.tag;
             lowercolortag.Text = "Tag: " + s.LowerColor.tag;
 
+            // styd: show the physical LIGHTS index associated with each color, same info as
+            // the Edit Sector > Lights tab's Index column
+            ceilingcolorindex.Text = "Index: " + Lights.GetDisplayIndex(s.CeilColor);
+            floorcolorindex.Text = "Index: " + Lights.GetDisplayIndex(s.FloorColor);
+            thingcolorindex.Text = "Index: " + Lights.GetDisplayIndex(s.ThingColor);
+            uppercolorindex.Text = "Index: " + Lights.GetDisplayIndex(s.TopColor);
+            lowercolorindex.Text = "Index: " + Lights.GetDisplayIndex(s.LowerColor);
+
             // Show the whole thing
             this.Show();
 			this.Update();

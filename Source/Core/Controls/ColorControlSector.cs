@@ -39,12 +39,13 @@ namespace CodeImp.DoomBuilder.Controls
 			InitializeComponent();
         }
 
-		// Properties
-		public string Label { get { return label.Text; } set { label.Text = value; } }
+        // Properties
+        public string Label { get { return label.Text; } set { label.Text = value; } }
         public PixelColor Color { get { return PixelColor.FromColor(panel.BackColor); } set { panel.BackColor = System.Drawing.Color.FromArgb(value.ToInt()); Hexbox.Text = Color.ToHex(); } }
+        public string IndexText { get { return indexbox.Text; } set { indexbox.Text = value; } }   // styd
 
-		// Button clicked
-		private void button_Click(object sender, EventArgs e)
+        // Button clicked
+        private void button_Click(object sender, EventArgs e)
 		{
 			// Mouse up first
 			button_MouseUp(sender, new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
@@ -87,22 +88,23 @@ namespace CodeImp.DoomBuilder.Controls
             }
         }
 
-		// Resized
-		private void ColorControlSector_Resize(object sender, EventArgs e)
-		{
-			try
-			{
+        // Resized
+        private void ColorControlSector_Resize(object sender, EventArgs e)
+        {
+            try
+            {
                 Hexbox.Left = ClientSize.Width - Hexbox.Width;
-				button.Left = ClientSize.Width - button.Width - Hexbox.Width - 3;
-				panel.Left = ClientSize.Width - button.Width - panel.Width - Hexbox.Width - 6;
-				label.Left = 0;
-				label.Width = panel.Left;
-			}
-			catch(Exception) { }
-		}
+                button.Left = ClientSize.Width - button.Width - Hexbox.Width - 3;
+                panel.Left = ClientSize.Width - button.Width - panel.Width - Hexbox.Width - 6;
+                indexbox.Left = panel.Left - 8 - indexbox.Width;   // styd
+                label.Left = 0;
+                label.Width = indexbox.Left - 4;   // styd
+            }
+            catch(Exception) { }
+        }
 
-		// Mouse pressed on button
-		private void button_MouseDown(object sender, MouseEventArgs e)
+        // Mouse pressed on button
+        private void button_MouseDown(object sender, MouseEventArgs e)
 		{
 			// This moves the image 1 pixel to right-bottom
 			if(e.Button == MouseButtons.Left)

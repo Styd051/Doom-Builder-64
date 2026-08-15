@@ -40,6 +40,7 @@ namespace CodeImp.DoomBuilder.Windows
             System.Windows.Forms.GroupBox groupBox1;
             System.Windows.Forms.GroupBox groupBox3;
             System.Windows.Forms.Label colortaglabel;
+            System.Windows.Forms.Label colorindexlabel;   // styd
             this.floorheight = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();
             this.ceilingheight = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();
             this.sectorheight = new System.Windows.Forms.Label();
@@ -56,6 +57,11 @@ namespace CodeImp.DoomBuilder.Windows
             this.thingcolortag = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();
             this.lowercolortag = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();
             this.floorcolortag = new CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox();
+            this.ceilingcolornewtag = new System.Windows.Forms.Button();   // styd
+            this.topcolornewtag = new System.Windows.Forms.Button();   // styd
+            this.thingcolornewtag = new System.Windows.Forms.Button();   // styd
+            this.lowercolornewtag = new System.Windows.Forms.Button();   // styd
+            this.floorcolornewtag = new System.Windows.Forms.Button();   // styd
             this.button19 = new System.Windows.Forms.Button();
             this.button20 = new System.Windows.Forms.Button();
             this.button17 = new System.Windows.Forms.Button();
@@ -96,6 +102,7 @@ namespace CodeImp.DoomBuilder.Windows
             label6 = new System.Windows.Forms.Label();
             groupBox1 = new System.Windows.Forms.GroupBox();
             colortaglabel = new System.Windows.Forms.Label();
+            colorindexlabel = new System.Windows.Forms.Label();   // styd
             groupBox3 = new System.Windows.Forms.GroupBox();
             groupfloorceiling.SuspendLayout();
             groupBox1.SuspendLayout();
@@ -275,9 +282,15 @@ namespace CodeImp.DoomBuilder.Windows
             groupBox1.Controls.Add(this.thingcolortag);
             groupBox1.Controls.Add(this.lowercolortag);
             groupBox1.Controls.Add(this.floorcolortag);
+            groupBox1.Controls.Add(this.ceilingcolornewtag);
+            groupBox1.Controls.Add(this.topcolornewtag);
+            groupBox1.Controls.Add(this.thingcolornewtag);
+            groupBox1.Controls.Add(this.lowercolornewtag);
+            groupBox1.Controls.Add(this.floorcolornewtag);
+            groupBox1.Controls.Add(colorindexlabel);
             groupBox1.Location = new System.Drawing.Point(17, 20);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new System.Drawing.Size(350, 198);
+            groupBox1.Size = new System.Drawing.Size(510, 198);
             groupBox1.TabIndex = 2;
             groupBox1.TabStop = false;
             groupBox1.Text = "Colored Lighting Info";
@@ -291,7 +304,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.floorcolor.MaximumSize = new System.Drawing.Size(10000, 23);
             this.floorcolor.MinimumSize = new System.Drawing.Size(100, 23);
             this.floorcolor.Name = "floorcolor";
-            this.floorcolor.Size = new System.Drawing.Size(230, 23);
+            this.floorcolor.Size = new System.Drawing.Size(310, 23);
             this.floorcolor.TabIndex = 6;
             // 
             // lowercolor
@@ -303,7 +316,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.lowercolor.MaximumSize = new System.Drawing.Size(10000, 23);
             this.lowercolor.MinimumSize = new System.Drawing.Size(100, 23);
             this.lowercolor.Name = "lowercolor";
-            this.lowercolor.Size = new System.Drawing.Size(230, 23);
+            this.lowercolor.Size = new System.Drawing.Size(310, 23);
             this.lowercolor.TabIndex = 5;
             // 
             // thingcolor
@@ -315,7 +328,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.thingcolor.MaximumSize = new System.Drawing.Size(10000, 23);
             this.thingcolor.MinimumSize = new System.Drawing.Size(100, 23);
             this.thingcolor.Name = "thingcolor";
-            this.thingcolor.Size = new System.Drawing.Size(230, 23);
+            this.thingcolor.Size = new System.Drawing.Size(310, 23);
             this.thingcolor.TabIndex = 4;
             // 
             // topcolor
@@ -327,7 +340,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.topcolor.MaximumSize = new System.Drawing.Size(10000, 23);
             this.topcolor.MinimumSize = new System.Drawing.Size(100, 23);
             this.topcolor.Name = "topcolor";
-            this.topcolor.Size = new System.Drawing.Size(230, 23);
+            this.topcolor.Size = new System.Drawing.Size(310, 23);
             this.topcolor.TabIndex = 3;
             // 
             // ceilingcolor
@@ -339,7 +352,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.ceilingcolor.MaximumSize = new System.Drawing.Size(10000, 23);
             this.ceilingcolor.MinimumSize = new System.Drawing.Size(100, 23);
             this.ceilingcolor.Name = "ceilingcolor";
-            this.ceilingcolor.Size = new System.Drawing.Size(230, 23);
+            this.ceilingcolor.Size = new System.Drawing.Size(310, 23);
             this.ceilingcolor.TabIndex = 2;
             // 
             // groupBox3
@@ -354,7 +367,7 @@ namespace CodeImp.DoomBuilder.Windows
             groupBox3.Controls.Add(this.button4);
             groupBox3.Controls.Add(this.button2);
             groupBox3.Controls.Add(this.button1);
-            groupBox3.Location = new System.Drawing.Point(377, 20);
+            groupBox3.Location = new System.Drawing.Point(537, 20);
             groupBox3.Name = "groupBox3";
             groupBox3.Size = new System.Drawing.Size(112, 198);
             groupBox3.TabIndex = 4;
@@ -363,9 +376,9 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             // colortaglabel
             // 
-            colortaglabel.Location = new System.Drawing.Point(260, 18);
+            colortaglabel.Location = new System.Drawing.Point(340, 18);
             colortaglabel.Name = "colortaglabel";
-            colortaglabel.Size = new System.Drawing.Size(60, 16);
+            colortaglabel.Size = new System.Drawing.Size(55, 16);
             colortaglabel.TabIndex = 16;
             colortaglabel.Text = "Tag";
             colortaglabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -376,7 +389,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.ceilingcolortag.AllowNegative = false;
             this.ceilingcolortag.AllowRelative = true;
             this.ceilingcolortag.ButtonStep = 1;
-            this.ceilingcolortag.Location = new System.Drawing.Point(260, 35);
+            this.ceilingcolortag.Location = new System.Drawing.Point(340, 35);
             this.ceilingcolortag.Name = "ceilingcolortag";
             this.ceilingcolortag.Size = new System.Drawing.Size(75, 24);
             this.ceilingcolortag.StepValues = null;
@@ -388,7 +401,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.topcolortag.AllowNegative = false;
             this.topcolortag.AllowRelative = true;
             this.topcolortag.ButtonStep = 1;
-            this.topcolortag.Location = new System.Drawing.Point(260, 64);
+            this.topcolortag.Location = new System.Drawing.Point(340, 64);
             this.topcolortag.Name = "topcolortag";
             this.topcolortag.Size = new System.Drawing.Size(75, 24);
             this.topcolortag.StepValues = null;
@@ -400,7 +413,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.thingcolortag.AllowNegative = false;
             this.thingcolortag.AllowRelative = true;
             this.thingcolortag.ButtonStep = 1;
-            this.thingcolortag.Location = new System.Drawing.Point(260, 93);
+            this.thingcolortag.Location = new System.Drawing.Point(340, 93);
             this.thingcolortag.Name = "thingcolortag";
             this.thingcolortag.Size = new System.Drawing.Size(75, 24);
             this.thingcolortag.StepValues = null;
@@ -412,7 +425,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.lowercolortag.AllowNegative = false;
             this.lowercolortag.AllowRelative = true;
             this.lowercolortag.ButtonStep = 1;
-            this.lowercolortag.Location = new System.Drawing.Point(260, 122);
+            this.lowercolortag.Location = new System.Drawing.Point(340, 122);
             this.lowercolortag.Name = "lowercolortag";
             this.lowercolortag.Size = new System.Drawing.Size(75, 24);
             this.lowercolortag.StepValues = null;
@@ -424,11 +437,70 @@ namespace CodeImp.DoomBuilder.Windows
             this.floorcolortag.AllowNegative = false;
             this.floorcolortag.AllowRelative = true;
             this.floorcolortag.ButtonStep = 1;
-            this.floorcolortag.Location = new System.Drawing.Point(260, 151);
+            this.floorcolortag.Location = new System.Drawing.Point(340, 151);
             this.floorcolortag.Name = "floorcolortag";
             this.floorcolortag.Size = new System.Drawing.Size(75, 24);
             this.floorcolortag.StepValues = null;
             this.floorcolortag.TabIndex = 11;
+            // 
+            // colorindexlabel (styd)
+            // 
+            colorindexlabel.Location = new System.Drawing.Point(132, 18);
+            colorindexlabel.Name = "colorindexlabel";
+            colorindexlabel.Size = new System.Drawing.Size(35, 16);
+            colorindexlabel.TabIndex = 17;
+            colorindexlabel.Text = "Index";
+            colorindexlabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // ceilingcolornewtag (styd)
+            // 
+            this.ceilingcolornewtag.Location = new System.Drawing.Point(421, 35);
+            this.ceilingcolornewtag.Name = "ceilingcolornewtag";
+            this.ceilingcolornewtag.Size = new System.Drawing.Size(70, 24);
+            this.ceilingcolornewtag.TabIndex = 18;
+            this.ceilingcolornewtag.Text = "New Tag";
+            this.ceilingcolornewtag.UseVisualStyleBackColor = true;
+            this.ceilingcolornewtag.Click += new System.EventHandler(this.ceilingcolornewtag_Click);
+            // 
+            // topcolornewtag (styd)
+            // 
+            this.topcolornewtag.Location = new System.Drawing.Point(421, 64);
+            this.topcolornewtag.Name = "topcolornewtag";
+            this.topcolornewtag.Size = new System.Drawing.Size(70, 24);
+            this.topcolornewtag.TabIndex = 19;
+            this.topcolornewtag.Text = "New Tag";
+            this.topcolornewtag.UseVisualStyleBackColor = true;
+            this.topcolornewtag.Click += new System.EventHandler(this.topcolornewtag_Click);
+            // 
+            // thingcolornewtag (styd)
+            // 
+            this.thingcolornewtag.Location = new System.Drawing.Point(421, 93);
+            this.thingcolornewtag.Name = "thingcolornewtag";
+            this.thingcolornewtag.Size = new System.Drawing.Size(70, 24);
+            this.thingcolornewtag.TabIndex = 20;
+            this.thingcolornewtag.Text = "New Tag";
+            this.thingcolornewtag.UseVisualStyleBackColor = true;
+            this.thingcolornewtag.Click += new System.EventHandler(this.thingcolornewtag_Click);
+            // 
+            // lowercolornewtag (styd)
+            // 
+            this.lowercolornewtag.Location = new System.Drawing.Point(421, 122);
+            this.lowercolornewtag.Name = "lowercolornewtag";
+            this.lowercolornewtag.Size = new System.Drawing.Size(70, 24);
+            this.lowercolornewtag.TabIndex = 21;
+            this.lowercolornewtag.Text = "New Tag";
+            this.lowercolornewtag.UseVisualStyleBackColor = true;
+            this.lowercolornewtag.Click += new System.EventHandler(this.lowercolornewtag_Click);
+            // 
+            // floorcolornewtag (styd)
+            // 
+            this.floorcolornewtag.Location = new System.Drawing.Point(421, 151);
+            this.floorcolornewtag.Name = "floorcolornewtag";
+            this.floorcolornewtag.Size = new System.Drawing.Size(70, 24);
+            this.floorcolornewtag.TabIndex = 22;
+            this.floorcolornewtag.Text = "New Tag";
+            this.floorcolornewtag.UseVisualStyleBackColor = true;
+            this.floorcolornewtag.Click += new System.EventHandler(this.floorcolornewtag_Click);
             // 
             // button19
             // 
@@ -633,7 +705,7 @@ namespace CodeImp.DoomBuilder.Windows
             // 
             this.cancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancel.Location = new System.Drawing.Point(446, 571);
+            this.cancel.Location = new System.Drawing.Point(583, 571);
             this.cancel.Name = "cancel";
             this.cancel.Size = new System.Drawing.Size(112, 25);
             this.cancel.TabIndex = 2;
@@ -644,7 +716,7 @@ namespace CodeImp.DoomBuilder.Windows
             // apply
             // 
             this.apply.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.apply.Location = new System.Drawing.Point(327, 571);
+            this.apply.Location = new System.Drawing.Point(464, 571);
             this.apply.Name = "apply";
             this.apply.Size = new System.Drawing.Size(112, 25);
             this.apply.TabIndex = 1;
@@ -665,7 +737,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.tabs.Margin = new System.Windows.Forms.Padding(1);
             this.tabs.Name = "tabs";
             this.tabs.SelectedIndex = 0;
-            this.tabs.Size = new System.Drawing.Size(548, 544);
+            this.tabs.Size = new System.Drawing.Size(685, 544);
             this.tabs.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
             this.tabs.TabIndex = 0;
             // 
@@ -739,7 +811,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.tabLights.Font = new System.Drawing.Font("Arial", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabLights.Location = new System.Drawing.Point(4, 23);
             this.tabLights.Name = "tabLights";
-            this.tabLights.Size = new System.Drawing.Size(540, 517);
+            this.tabLights.Size = new System.Drawing.Size(677, 517);
             this.tabLights.TabIndex = 2;
             this.tabLights.Text = "Lights";
             this.tabLights.UseVisualStyleBackColor = true;
@@ -766,7 +838,7 @@ namespace CodeImp.DoomBuilder.Windows
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.CancelButton = this.cancel;
-            this.ClientSize = new System.Drawing.Size(568, 606);
+            this.ClientSize = new System.Drawing.Size(705, 606);
             this.Controls.Add(this.tabs);
             this.Controls.Add(this.cancel);
             this.Controls.Add(this.apply);
@@ -845,5 +917,10 @@ namespace CodeImp.DoomBuilder.Windows
         private CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox thingcolortag;
         private CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox lowercolortag;
         private CodeImp.DoomBuilder.Controls.ButtonsNumericTextbox floorcolortag;
+        private System.Windows.Forms.Button ceilingcolornewtag;   // styd
+        private System.Windows.Forms.Button topcolornewtag;   // styd
+        private System.Windows.Forms.Button thingcolornewtag;   // styd
+        private System.Windows.Forms.Button lowercolornewtag;   // styd
+        private System.Windows.Forms.Button floorcolornewtag;   // styd
     }
 }

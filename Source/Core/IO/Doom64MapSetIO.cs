@@ -45,12 +45,13 @@ namespace CodeImp.DoomBuilder.IO
 		{
 		}
 
-		#endregion
+        #endregion
 
         #region ================== Variables
 
         internal List<Lights> light;
         internal List<bool> lightOwnerTagZero; // styd: true if the entry at this position was first written by a sector with Sector.Tag == 0 — only such entries are safe to reuse for other Tag==0 sectors' untagged colors
+        internal List<int> lightOriginalIndex; // styd: originalIndex of the Lights value that first created each entry in `light` during this save pass, or -1 if it had none. See AddLightGetIndex().
         internal Dictionary<Sector, int[]> sectorWrittenIndices; // styd
 
         #endregion
@@ -106,6 +107,35 @@ namespace CodeImp.DoomBuilder.IO
             if (l.isDirect && l.color.r == l.color.g && l.color.r == l.color.b && l.tag == 0)
                 return l.color.r;
 
+            // styd: if this color has a known physical LIGHTS-lump position - either
+            // loaded from an existing WAD, or requested manually via the "Index" field in
+            // Edit Sector > Lights (matching DEX Editor's "Light NNN" field) - and another
+            // entry already written during this save pass came from that EXACT same
+            // position, reuse it. This restores/creates exact physical sharing between
+            // sectors regardless of their Sector.Tag - confirmed necessary on map23 and
+            // map29, where Sector_CopyLightsAndInterpolate targets several
+            // differently-tagged sectors that need to share one LIGHTS entry so that
+            // P_UpdateLightThinker's in-place mutation of that slot (p_lights.c) is visible
+            // on all of them at once. This is a stronger, fact-based signal than the tag
+            // heuristics below - it can't reintroduce the map02 regression described there
+            // (sectors wrongly merged just for having matching colors) because it only
+            // merges entries that share a VERIFIED or EXPLICITLY REQUESTED position, never
+            // a coincidence.
+            if (l.hasOriginalIndex)
+            {
+                for (int i = 0; i < light.Count; i++)
+                {
+                    if (lightOriginalIndex[i] == l.originalIndex &&
+                        light[i].color.r == l.color.r &&
+                        light[i].color.g == l.color.g &&
+                        light[i].color.b == l.color.b &&
+                        light[i].tag == l.tag)
+                    {
+                        return 256 + i;
+                    }
+                }
+            }
+
             // styd: deduplicate identical tagged inputs (RGB+tag) unconditionally — safe regardless
             // of which sector owns them, since P_ChangeLightByTag/SetLightID always walks every entry
             // matching a given light-tag (P_FindLightFromLightTag), so sharing a physical index between
@@ -124,20 +154,19 @@ namespace CodeImp.DoomBuilder.IO
                     }
                 }
             }
-            // styd: for untagged colors (tag == 0), only dedupe when BOTH the current sector and the
-            // existing entry's original owner sector have Sector.Tag == 0. A sector with a real sector
-            // tag can be individually targeted by tag-based sector scripts (Sector_CopyLightsAndInterpolate,
-            // Sector_CopyLights, Modify Sector Color, etc. — all resolve sectors via
-            // P_FindSectorFromLineTag(sector.Tag, ...)), and those scripts mutate the physical LIGHTS
-            // entry referenced by the targeted sector's own colors[i] in place (P_UpdateLightThinker/
-            // T_LightMorph in p_lights.c). Sharing that entry with any other sector — even one that looks
-            // visually identical — makes the other sector bleed the same color change. Confirmed via map02:
-            // sectors 16,17,25,26,30,31,33,35,36,38,40,152,161,180 all changed color together when only
-            // sector 32 (Tag 3) was the intended target of Sector_CopyLightsAndInterpolate(3, 2).
-            // Sectors with Sector.Tag == 0 can never be individually targeted this way (a script would
-            // have to target tag 0, matching literally every untagged sector in the map, which no mapper
-            // does deliberately), so it's safe to let them share entries and shrink the LIGHTS lump.
-            else if (s.Tag == 0)
+            // styd: deliberately NOT deduplicating coincidentally-identical untagged (tag
+            // == 0) colors across different sectors anymore, even when both are Tag == 0.
+            // This used to shrink the LIGHTS lump by merging colors the original compiler
+            // (DEX/blam) had left as separate, unrelated entries - functionally harmless
+            // (confirmed in-game on map29), but it meant a re-saved, untouched map no
+            // longer matched the original LIGHTS lump byte-for-byte. Dylan asked for exact
+            // fidelity to the original compiler's output instead: every color now gets its
+            // own fresh entry unless it's explicitly linked to another one, either because
+            // it was loaded from (or manually pointed at, via the Index field) the same
+            // physical slot (see the hasOriginalIndex block above), or because it shares a
+            // real light tag (the l.tag != 0 block above, which stays - that one is a
+            // functional requirement of P_FindLightFromLightTag, not a size optimization).
+            /*else if (s.Tag == 0)
             {
                 for (int i = 0; i < light.Count; i++)
                 {
@@ -150,11 +179,12 @@ namespace CodeImp.DoomBuilder.IO
                         return 256 + i;
                     }
                 }
-            }
+            }*/
 
             int index = light.Count;
             light.Add(l);
             lightOwnerTagZero.Add(s.Tag == 0);
+            lightOriginalIndex.Add(l.hasOriginalIndex ? l.originalIndex : -1);
             return 256 + index;
         }
 
@@ -208,9 +238,9 @@ namespace CodeImp.DoomBuilder.IO
 
         #endregion
 
-        #region ================== Reading
+            #region ================== Reading
 
-        // This reads a map from the file and returns a MapSet
+            // This reads a map from the file and returns a MapSet
         public override MapSet Read(MapSet map, string mapname)
 		{
 			int firstindex;
@@ -436,10 +466,16 @@ namespace CodeImp.DoomBuilder.IO
                 lightColors[i].color.b = lightreader.ReadByte();
                 lightColors[i].color.a = lightreader.ReadByte();
                 lightColors[i].tag = lightreader.ReadUInt16();
+
+                // styd: remember which physical LIGHTS-lump slot this entry came from, so
+                // AddLightGetIndex() can restore the exact original sharing on save - see
+                // its comment for the full reasoning.
+                lightColors[i].originalIndex = i;
+                lightColors[i].hasOriginalIndex = true;
             }
 
-			// Read items from the lump
-			map.SetCapacity(0, 0, 0, map.Sectors.Count + num, 0);
+            // Read items from the lump
+            map.SetCapacity(0, 0, 0, map.Sectors.Count + num, 0);
 			for(i = 0; i < num; i++)
 			{
 				// Read properties from stream
@@ -1112,6 +1148,7 @@ namespace CodeImp.DoomBuilder.IO
 
             light = new List<Lights>();
             lightOwnerTagZero = new List<bool>();
+            lightOriginalIndex = new List<int>();
             sectorWrittenIndices = new Dictionary<Sector, int[]>();
 
             // styd: construct indices properly — each slot = unique entry
@@ -1124,6 +1161,47 @@ namespace CodeImp.DoomBuilder.IO
                 indices[3] = AddLightGetIndex(s, s.TopColor);
                 indices[4] = AddLightGetIndex(s, s.LowerColor);
                 sectorWrittenIndices[s] = indices;
+            }
+
+            // styd: reorder the collected LIGHTS entries to match their original physical
+            // position in the source WAD when known, so re-saving an unmodified map
+            // reproduces the exact original LIGHTS lump content AND order - not just the
+            // same set of colors at different offsets. Entries without a known original
+            // position (freshly created sectors, or colors manually re-pointed via the
+            // Index field) are placed after all the ones that do have one, keeping their
+            // relative creation order among themselves.
+            int[] order = new int[light.Count];
+            for (int i = 0; i < order.Length; i++)
+                order[i] = i;
+
+            Array.Sort(order, (a, b) =>
+            {
+                int oa = lightOriginalIndex[a];
+                int ob = lightOriginalIndex[b];
+                if (oa == -1 && ob == -1) return a.CompareTo(b);
+                if (oa == -1) return 1;
+                if (ob == -1) return -1;
+                return oa.CompareTo(ob);
+            });
+
+            int[] remap = new int[light.Count];
+            List<Lights> sortedLight = new List<Lights>(light.Count);
+            for (int newIndex = 0; newIndex < order.Length; newIndex++)
+            {
+                int oldIndex = order[newIndex];
+                remap[oldIndex] = newIndex;
+                sortedLight.Add(light[oldIndex]);
+            }
+            light = sortedLight;
+
+            foreach (Sector s in map.Sectors)
+            {
+                int[] indices = sectorWrittenIndices[s];
+                for (int k = 0; k < indices.Length; k++)
+                {
+                    if (indices[k] >= 256)
+                        indices[k] = 256 + remap[indices[k] - 256];
+                }
             }
 
             foreach (Lights l in light)
