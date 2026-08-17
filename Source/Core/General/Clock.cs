@@ -30,82 +30,55 @@ namespace CodeImp.DoomBuilder
 {
 	public class Clock
 	{
-		#region ================== Declarations
-		
-		//#if !LINUX
-		
-		[DllImport("kernel32.dll")]
-		private static extern short QueryPerformanceCounter(ref long x);
-		
-		[DllImport("kernel32.dll")]
-		private static extern short QueryPerformanceFrequency(ref long x);
-		
-		//#endif
+        #region ================== Declarations
 
-		#endregion
-		
-		#region ================== Constants
+        //#if !LINUX
 
-		// Set to true enable QPC if possible
-		private const bool USE_QPC = true;
-		
-		// Frequency indicating QPC unavailable
-		private const long FREQ_NO_QPC = -1;
-		
-		#endregion
+        [DllImport("kernel32.dll")]
+        private static extern short QueryPerformanceCounter(out long x);
 
-		#region ================== Variables
+        [DllImport("kernel32.dll")]
+        private static extern short QueryPerformanceFrequency(out long x);
 
-		// Settings
-		private long timefrequency = FREQ_NO_QPC;
-		private double timescale;
-		private double currenttime;
-		
-		// Disposing
-		private bool isdisposed = false;
+        //#endif
 
-		#endregion
+        #endregion
 
-		#region ================== Properties
+        #region ================== Constants
 
-		// Settings
-		public bool IsUsingQPC { get { return (timefrequency != FREQ_NO_QPC); } }
-		public double CurrentTime { get { return currenttime; } }
+        #endregion
 
-		// Disposing
-		public bool IsDisposed { get { return isdisposed; } }
+        #region ================== Variables
 
-		#endregion
+        // Settings
+        private double currenttime;
 
-		#region ================== Constructor / Disposer
+        // Disposing
+        private bool isdisposed = false;
 
-		// Constructor
-		public Clock()
-		{
-			// Only windows has QPC
-			//#if !LINUX
-			if(Environment.OSVersion.Platform != PlatformID.Unix)
-			{
-				// Get the high resolution clock frequency
-				if((QueryPerformanceFrequency(ref timefrequency) == 0) || !USE_QPC)
-				{
-					// No high resolution clock available
-					timefrequency = FREQ_NO_QPC;
-				}
-				else
-				{
-					// Calculate the time scale
-					timescale = (1d / (double)timefrequency) * 1000d;
-				}
-			}
-			//#endif
+        #endregion
 
-			// We have no destructor
-			GC.SuppressFinalize(this);
-		}
-		
-		// Disposer
-		public void Dispose()
+        #region ================== Properties
+
+        // Settings
+        public double CurrentTime { get { return currenttime; } }
+
+        // Disposing
+        public bool IsDisposed { get { return isdisposed; } }
+
+        #endregion
+
+        #region ================== Constructor / Disposer
+
+        // Constructor
+        public Clock()
+        {
+            // We have no destructor
+            GC.SuppressFinalize(this);
+        }
+
+        // Disposer
+        public void Dispose()
 		{
 			// Not already disposed?
 			if(!isdisposed)
@@ -124,27 +97,31 @@ namespace CodeImp.DoomBuilder
 		// This queries the system for the current time
 		public double GetCurrentTime()
 		{
-			// Only windows has QPC
-			//#if !LINUX
-			
-			long timecount = 0;
+            // Only windows has QPC
+            //#if !LINUX
 
-			// High resolution clock available?
-			if(timefrequency != FREQ_NO_QPC)
-			{
-				// Get the high resolution count
-				QueryPerformanceCounter(ref timecount);
-				
-				// Calculate high resolution time in milliseconds
-				currenttime = (double)timecount * timescale;
-			}
-			else
-			{
-				// Use standard clock
-				currenttime = (double)Environment.TickCount;
-			}
-			
-			/*
+            long timefrequency;
+
+            // Get the high resolution clock frequency
+            if (QueryPerformanceFrequency(out timefrequency) == 0)
+            {
+                // No high resolution clock available
+                currenttime = (double)Environment.TickCount;
+            }
+            else
+            {
+                long timecount;
+
+                // Get the high resolution count
+                QueryPerformanceCounter(out timecount);
+
+                // Calculate high resolution time in milliseconds
+                // TODO: It seems there is a loss of precision here when the
+                // result of this math is assigned to currenttime, WHY?!
+                currenttime = (double)timecount / (double)timefrequency * (double)1000.0;
+            }
+
+            /*
 			#else
 			
 			// In LINUX always use standard clock
@@ -153,8 +130,8 @@ namespace CodeImp.DoomBuilder
 			#endif
 			*/
 
-			// Return the current time
-			return currenttime;
+            // Return the current time
+            return currenttime;
 		}
 		
 		#endregion
