@@ -190,7 +190,7 @@ namespace CodeImp.DoomBuilder.BuilderModes
             // styd: slight offset perpendicular to the wall to avoid z-fighting
             // with the middle/upper/lower texture (reproduces the +sin/+cos term from R_RenderSwitch)
             Vector2D normal = new Vector2D(dir.y, -dir.x);
-            const float SWITCH_NORMAL_OFFSET = 1.0f;
+            const float SWITCH_NORMAL_OFFSET = 0.1f;
             if (!Sidedef.IsFront) normal = -normal;
 
             Vector2D offsetCenter = center + normal * SWITCH_NORMAL_OFFSET;
