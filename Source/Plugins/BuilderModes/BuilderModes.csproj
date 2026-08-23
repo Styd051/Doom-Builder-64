@@ -75,6 +75,9 @@
     <Compile Include="FindReplace\FindReplaceObject.cs" />
     <Compile Include="FindReplace\FindReplaceType.cs" />
     <Compile Include="FindReplace\FindSectorTags.cs" />
+	<Compile Include="FindReplace\FindSectorLightIndex.cs" />
+	<Compile Include="FindReplace\FindSectorLightColor.cs" />
+	<Compile Include="FindReplace\FindSectorLightTag.cs" />
     <Compile Include="General\Association.cs" />
     <Compile Include="General\BuilderPlug.cs" />
     <Compile Include="General\CopyStructures.cs" />

@@ -61,7 +61,7 @@ namespace CodeImp.DoomBuilder.Map
             this.color.b = b;
             this.color.a = 255;
             this.tag = tag;
-            this.isDirect = true;   // Default value for a color created "from scratch" (not loaded from a file)
+            this.isDirect = (r == g) && (g == b) && (tag == 0);   // styd: matches AddLightGetIndex's own condition for treating this as a direct grayscale index — a colored or tagged value can never be a direct index, so GetDisplayIndex() correctly falls through to "" (fresh, will get its own LIGHTS entry on save) instead of misleadingly showing a raw color channel
             this.originalIndex = -1;
             this.hasOriginalIndex = false;
         }

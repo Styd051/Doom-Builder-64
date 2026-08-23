@@ -118,18 +118,18 @@ namespace CodeImp.DoomBuilder.Map
 		public FlatVertex[] FlatVertices { get { return flatvertices; } }
 		public ReadOnlyCollection<LabelPositionInfo> Labels { get { return labels; } }
         internal Dictionary<string, bool> Flags { get { return flags; } } // villsa
-        public Lights CeilColor { get { return ceilColor; } set { BeforePropsChange(); ceilColor = value; } } // villsa
-        public Lights FloorColor { get { return flrColor; } set { BeforePropsChange(); flrColor = value; } } // villsa
-        public Lights ThingColor { get { return thingColor; } set { BeforePropsChange(); thingColor = value; } } // villsa
-        public Lights TopColor { get { return topColor; } set { BeforePropsChange(); topColor = value; } } // villsa
-        public Lights LowerColor { get { return lwrColor; } set { BeforePropsChange(); lwrColor = value; } } // villsa
-		
-		#endregion
+        public Lights CeilColor { get { return ceilColor; } set { BeforePropsChange(); ceilColor = value; updateneeded = true; } } // villsa
+        public Lights FloorColor { get { return flrColor; } set { BeforePropsChange(); flrColor = value; updateneeded = true; } } // villsa
+        public Lights ThingColor { get { return thingColor; } set { BeforePropsChange(); thingColor = value; updateneeded = true; } } // villsa
+        public Lights TopColor { get { return topColor; } set { BeforePropsChange(); topColor = value; updateneeded = true; } } // villsa
+        public Lights LowerColor { get { return lwrColor; } set { BeforePropsChange(); lwrColor = value; updateneeded = true; } } // villsa
 
-		#region ================== Constructor / Disposer
+        #endregion
 
-		// Constructor
-		internal Sector(MapSet map, int listindex, int index)
+        #region ================== Constructor / Disposer
+
+        // Constructor
+        internal Sector(MapSet map, int listindex, int index)
 		{
 			// Initialize
 			this.map = map;
